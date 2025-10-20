@@ -1,4 +1,3 @@
-// Into-Me-I-See Service Worker — 2025-01-18-V3
 const CACHE_NAME = 'into-me-i-see-v1';
 const urlsToCache = ['/', '/manifest.json'];
 
