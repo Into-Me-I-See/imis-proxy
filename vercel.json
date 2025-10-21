@@ -1,18 +1,23 @@
 {
-  "headers": [
+  "version": 2,
+  "routes": [
     {
-      "source": "/sw.js",
-      "headers": [
-        { "key": "Content-Type", "value": "application/javascript; charset=utf-8" },
-        { "key": "Service-Worker-Allowed", "value": "/" },
-        { "key": "Cache-Control", "value": "no-store" },
-        { "key": "X-Content-Type-Options", "value": "nosniff" }
-      ]
+      "src": "^/sw\\.js$",
+      "headers": {
+        "Content-Type": "application/javascript; charset=utf-8",
+        "Service-Worker-Allowed": "/",
+        "Cache-Control": "no-store",
+        "X-Content-Type-Options": "nosniff"
+      },
+      "dest": "/public/sw.js"
+    },
+    {
+      "src": "^/api/.*",
+      "dest": "/api"
+    },
+    {
+      "src": "^(?!/api/|/sw\\.js)(.*)$",
+      "dest": "https://preview--into-me-i-see-app-97c444d1.base44.app/$1"
     }
-  ],
-  "rewrites": [
-    { "source": "/sw.js", "destination": "/sw.js" },
-    { "source": "/api/(.*)", "destination": "/api/$1" },
-    { "source": "/(?!api/|sw\\.js)(.*)", "destination": "https://preview--into-me-i-see-app-97c444d1.base44.app/$1" }
   ]
 }
