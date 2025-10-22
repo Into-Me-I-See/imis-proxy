@@ -11,13 +11,11 @@
       },
       "dest": "/public/sw.js"
     },
-    {
-      "src": "^/api/.*",
-      "dest": "/api"
-    },
+
+    { "src": "^/api/(public-key|subscribe|send)$", "dest": "/api/$1" },
     {
       "src": "^(?!/api/|/sw\\.js)(.*)$",
-      "dest": "https://preview--into-me-i-see-app-97c444d1.base44.app/$1"
+      "dest": "https://app.into-me-i-see.ca/$1"
     }
   ]
 }
