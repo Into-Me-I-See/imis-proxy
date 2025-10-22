@@ -1,34 +1,28 @@
-export const config = { runtime: "edge" };
+export default async function handler(req, res) {
+  try {
+    const base = 'https://into-me-i-see-app-97c444d1.base44.app'; // <- your Base44 app host
+    const url = new URL(req.url, 'http://local');
+    const path = url.searchParams.get('path') || '';
+    const target = `${base}/${path.replace(/^\/+/, '')}`;
 
-const APP = "https://app.into-me-i-see.ca";
-
-function rewriteAssets(html) {
-  const APP = "https://app.into-me-i-see.ca";
-
-  return html
-    // Fix relative and root-relative script & link paths
-    .replaceAll(/(<script[^>]+src=["'])(?!https?:)(\/?[^"'>]+\.js)(["'][^>]*>)/g, `$1${APP}/$2$3`)
-    .replaceAll(/(<link[^>]+href=["'])(?!https?:)(\/?[^"'>]+\.css)(["'][^>]*>)/g, `$1${APP}/$2$3`)
-    // Fix absolute Base44 URLs too
-    .replaceAll(/https:\/\/[a-z0-9.-]*base44\.app\/([^"'<>]+)/g, `${APP}/$1`);
-}
-
-export default async function handler(req) {
-  const url = new URL(req.url);
-  const upstream = await fetch(APP + url.pathname + url.search, {
-    headers: { "user-agent": req.headers.get("user-agent") || "" }
-  });
-  const ct = upstream.headers.get("content-type") || "";
-  if (!ct.includes("text/html")) {
-    return new Response(upstream.body, {
-      status: upstream.status,
-      headers: upstream.headers
+    const upstream = await fetch(target, {
+      headers: {
+        // Forward relevant headers if you want, but it's optional
+        'accept': 'application/javascript, */*;q=0.1',
+      },
+      redirect: 'follow',
     });
+
+    const status = upstream.status;
+    const buf = Buffer.from(await upstream.arrayBuffer());
+
+    // Force correct MIME for JS
+    res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+    // Helpful cache for static bundles (Base44 fingerprints)
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+
+    return res.status(status).send(buf);
+  } catch (e) {
+    res.status(502).json({ error: 'proxy_failed', detail: String(e) });
   }
-  const html = await upstream.text();
-  const rewritten = rewriteAssets(html);
-  const headers = new Headers(upstream.headers);
-  headers.set("content-type", "text/html; charset=utf-8");
-  headers.delete("content-length");
-  return new Response(rewritten, { status: upstream.status, headers });
 }
