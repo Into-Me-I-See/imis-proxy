@@ -3,9 +3,15 @@ export const config = { runtime: "edge" };
 const APP = "https://app.into-me-i-see.ca";
 
 function rewriteAssets(html) {
-  return html
+  let out = html
     .replaceAll(/(<script[^>]+src=["'])\/([^"']+\.js)(["'][^>]*>)/g, `$1${APP}/$2$3`)
     .replaceAll(/(<link[^>]+href=["'])\/([^"']+\.css)(["'][^>]*>)/g, `$1${APP}/$2$3`);
+
+  out = out
+    .replaceAll(/https:\/\/[a-z0-9.-]*base44\.app\/([^"'<>]+\.js)/g, `${APP}/$1`)
+    .replaceAll(/https:\/\/[a-z0-9.-]*base44\.app\/([^"'<>]+\.css)/g, `${APP}/$1`);
+
+  return out;
 }
 
 export default async function handler(req) {
