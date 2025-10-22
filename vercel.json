@@ -1,9 +1,17 @@
 {
   "rewrites": [
-    { "source": "/", "destination": "https://into-me-i-see-app-97c444d1.base44.app/" },
-    { "source": "/(.*\\.(?:css|png|jpg|jpeg|gif|svg|webp|ico|json|txt|map))",
-      "destination": "https://into-me-i-see-app-97c444d1.base44.app/$1" },
+    { "source": "/api/(.*)", "destination": "/api/$1" },
+    { "source": "/sw.js", "destination": "/sw.js" },
     { "source": "/(.*\\.js)", "destination": "/api/proxy?path=$1" },
-    { "source": "/sw.js", "destination": "/public/sw.js" }
+    { "source": "/(.*)", "destination": "https://into-me-i-see-app-97c444d1.base44.app/$1" }
+  ],
+  "headers": [
+    {
+      "source": "/sw.js",
+      "headers": [
+        { "key": "Content-Type", "value": "application/javascript; charset=utf-8" }
+      ]
+    }
   ]
 }
+
