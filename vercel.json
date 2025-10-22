@@ -1,17 +1,13 @@
 {
-  "version": 2,
-  "routes": [
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/$1" },
+    { "source": "/sw.js", "destination": "/sw.js" },
+    { "source": "/(.*)", "destination": "https://into-me-i-see-app-97c444d1.base44.app/$1" }
+  ],
+  "headers": [
     {
-      "src": "^/sw\\.js$",
-      "headers": {
-        "Content-Type": "application/javascript; charset=utf-8",
-        "Service-Worker-Allowed": "/",
-        "Cache-Control": "no-store",
-        "X-Content-Type-Options": "nosniff"
-      },
-      "dest": "/public/sw.js"
-    },
-    { "src": "^/api/(public-key|subscribe|send)$", "dest": "/api/$1" },
-    { "src": "^(?!/api/|/sw\\.js)(.*)$", "dest": "/api/proxy" }
+      "source": "/sw.js",
+      "headers": [{ "key": "Content-Type", "value": "application/javascript; charset=utf-8" }]
+    }
   ]
 }
