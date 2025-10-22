@@ -3,15 +3,14 @@ export const config = { runtime: "edge" };
 const APP = "https://app.into-me-i-see.ca";
 
 function rewriteAssets(html) {
-  let out = html
-    .replaceAll(/(<script[^>]+src=["'])\/([^"']+\.js)(["'][^>]*>)/g, `$1${APP}/$2$3`)
-    .replaceAll(/(<link[^>]+href=["'])\/([^"']+\.css)(["'][^>]*>)/g, `$1${APP}/$2$3`);
+  const APP = "https://app.into-me-i-see.ca";
 
-  out = out
-    .replaceAll(/https:\/\/[a-z0-9.-]*base44\.app\/([^"'<>]+\.js)/g, `${APP}/$1`)
-    .replaceAll(/https:\/\/[a-z0-9.-]*base44\.app\/([^"'<>]+\.css)/g, `${APP}/$1`);
-
-  return out;
+  return html
+    // Fix relative and root-relative script & link paths
+    .replaceAll(/(<script[^>]+src=["'])(?!https?:)(\/?[^"'>]+\.js)(["'][^>]*>)/g, `$1${APP}/$2$3`)
+    .replaceAll(/(<link[^>]+href=["'])(?!https?:)(\/?[^"'>]+\.css)(["'][^>]*>)/g, `$1${APP}/$2$3`)
+    // Fix absolute Base44 URLs too
+    .replaceAll(/https:\/\/[a-z0-9.-]*base44\.app\/([^"'<>]+)/g, `${APP}/$1`);
 }
 
 export default async function handler(req) {
