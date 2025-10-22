@@ -1,31 +1,67 @@
-const CACHE_NAME = 'into-me-i-see-v1';
-const urlsToCache = ['/', '/manifest.json'];
+const CACHE_NAME = 'imis-cache-v2';
+const URLs_TO_PRECACHE = ['/', '/manifest.json'];
 
-self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(CACHE_NAME)
-    .then(c => c.addAll(urlsToCache))
-    .then(() => self.skipWaiting()));
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(URLs_TO_PRECACHE))
+  );
+  self.skipWaiting();
 });
 
-self.addEventListener('activate', (e) => {
-  e.waitUntil(caches.keys()
-    .then(n => Promise.all(n.map(x => x !== CACHE_NAME ? caches.delete(x) : undefined)))
-    .then(() => self.clients.claim()));
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((names) =>
+      Promise.all(names.map((n) => (n !== CACHE_NAME ? caches.delete(n) : undefined)))
+    )
+  );
+  self.clients.claim();
 });
 
-self.addEventListener('fetch', (e) => {
-  e.respondWith(fetch(e.request)
-    .then(r => { const c = r.clone(); caches.open(CACHE_NAME).then(x => x.put(e.request, c)); return r; })
-    .catch(() => caches.match(e.request)));
+self.addEventListener('fetch', (event) => {
+  const req = event.request;
+  if (req.method !== 'GET' || new URL(req.url).origin !== self.location.origin) return;
+  if (req.url.includes('/api/') || req.url.endsWith('/sw.js')) return;
+
+  event.respondWith(
+    caches.match(req).then((cached) => {
+      const fetchPromise = fetch(req)
+        .then((netRes) => {
+          const okToCache =
+            netRes.ok &&
+            ['basic', 'default'].includes(netRes.type) &&
+            ((netRes.headers.get('content-type') || '').includes('text/') ||
+              (netRes.headers.get('content-type') || '').includes('javascript') ||
+              (netRes.headers.get('content-type') || '').includes('css') ||
+              (netRes.headers.get('content-type') || '').includes('image'));
+
+          if (okToCache) {
+            const clone = netRes.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(req, clone)).catch(() => {});
+          }
+          return netRes;
+        })
+        .catch(() => cached || Promise.reject());
+      return cached || fetchPromise;
+    })
+  );
 });
 
-self.addEventListener('push', (e) => {
-  let d = { title: 'Into-Me-I-See', body: 'You have a new notification', icon: '/icon-192x192.png', badge: '/icon-192x192.png' };
-  try { if (e.data) d = e.data.json(); } catch { d.body = e.data?.text() || d.body; }
-  e.waitUntil(self.registration.showNotification(d.title, { body: d.body, icon: d.icon, badge: d.badge, data: d.data || {} }));
+self.addEventListener('push', (event) => {
+  let d = { title: 'Into-Me-I-See', body: 'You have a new notification', data: {} };
+  try {
+    if (event.data) d = event.data.json();
+  } catch (_) {}
+  event.waitUntil(
+    self.registration.showNotification(d.title, {
+      body: d.body,
+      icon: '/icon-192x192.png',
+      badge: '/icon-192x192.png',
+      data: d.data || {},
+    })
+  );
 });
 
-self.addEventListener('notificationclick', (e) => {
-  e.notification.close();
-  e.waitUntil(clients.openWindow(e.notification.data?.url || '/'));
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(clients.openWindow(event.notification.data?.url || '/'));
 });
