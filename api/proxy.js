@@ -1,23 +1,23 @@
 export default async function handler(req, res) {
   try {
-    const baseUrl = 'https://into-me-i-see-app-97c44441.base44.app';
-    const path = req.query.path || '';
-    const targetUrl = `${baseUrl}${path}${req.url.replace('/api/proxy?path=', '')}`;
+    const base = 'https://into-me-i-see-app-97c44441.base44.app';
+    const url = req.url.replace(/^\/api\/proxy\?path=/, '');
+    const target = `${base}${url.startsWith('/') ? url : '/' + url}`;
 
-    const response = await fetch(targetUrl, {
+    const upstream = await fetch(target, {
       headers: {
         'User-Agent': req.headers['user-agent'] || '',
-        'Accept': req.headers['accept'] || '*/*',
-      },
+        'Accept': req.headers['accept'] || '*/*'
+      }
     });
 
-    const contentType = response.headers.get('content-type');
-    if (contentType) res.setHeader('Content-Type', contentType);
+    const type = upstream.headers.get('content-type');
+    if (type) res.setHeader('Content-Type', type);
 
-    const buffer = await response.arrayBuffer();
-    res.status(response.status).send(Buffer.from(buffer));
+    const buf = await upstream.arrayBuffer();
+    res.status(upstream.status).send(Buffer.from(buf));
   } catch (err) {
-    console.error('Proxy error:', err);
-    res.status(500).json({ error: 'Proxy failed', details: err.message });
+    console.error('Proxy error', err);
+    res.status(500).json({ error: 'proxy_failed', message: err.message });
   }
 }
