@@ -1,6 +1,22 @@
 {
-  "routes": [
-    { "src": "^/$", "dest": "/index.html" },
-    { "src": "^/sw\\.js$", "dest": "/sw.js" }
+  "rewrites": [
+    { "source": "/sw.js", "destination": "/public/sw.js" },
+
+    { "source": "/manifest.json", "destination": "/api/proxy?path=/manifest.json" },
+    { "source": "/favicon.ico",   "destination": "/api/proxy?path=/favicon.ico" },
+
+    { "source": "/static/:path*", "destination": "/api/proxy?path=/static/:path*" },
+
+    { "source": "/",        "destination": "/api/proxy?path=/" },
+    { "source": "/:path*",  "destination": "/api/proxy?path=/:path*" }
+  ],
+  "headers": [
+    {
+      "source": "/sw.js",
+      "headers": [
+        { "key": "Content-Type", "value": "application/javascript; charset=utf-8" },
+        { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
+      ]
+    }
   ]
 }
