@@ -1,9 +1,16 @@
 export default async function handler(req, res) {
   try {
+    // Base44 app URL
     const base = 'https://into-me-i-see-app-97c44441.base44.app';
-    const url = req.url.replace(/^\/api\/proxy\?path=/, '');
-    const target = `${base}${url.startsWith('/') ? url : '/' + url}`;
 
+    // Clean path
+    const rawPath = req.query.path || '/';
+    const query = req.url.split('?').slice(1).join('?'); // preserve querystring
+    const target = `${base}${rawPath}${query ? '?' + query : ''}`;
+
+    console.log('→ proxying to:', target);
+
+    // Fetch remote asset
     const upstream = await fetch(target, {
       headers: {
         'User-Agent': req.headers['user-agent'] || '',
@@ -11,14 +18,25 @@ export default async function handler(req, res) {
       }
     });
 
+    if (!upstream.ok) {
+      res.status(upstream.status).send(`Upstream error ${upstream.status}`);
+      return;
+    }
+
+    // Copy headers
     const type = upstream.headers.get('content-type');
     if (type) res.setHeader('Content-Type', type);
+    res.setHeader('Cache-Control', 'public, max-age=300');
 
-    const buf = await upstream.arrayBuffer();
-    res.status(upstream.status).send(Buffer.from(buf));
+    // Stream body
+    const buf = Buffer.from(await upstream.arrayBuffer());
+    res.status(upstream.status).send(buf);
   } catch (err) {
-    console.error('Proxy error', err);
-    res.status(500).json({ error: 'proxy_failed', message: err.message });
+    console.error('Proxy crash:', err);
+    res.status(500).json({
+      error: 'proxy_failed',
+      message: err.message,
+      stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+    });
   }
 }
-Fix proxy path handling for Base44 app
