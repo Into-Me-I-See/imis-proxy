@@ -1,19 +1,23 @@
 export default async function handler(req, res) {
   try {
-    const base = "https://into-me-i-see-app-97c444d1.base44.app";
-    const path = (req.query.path || "").replace(/^\/+/, "");
-    const qs = req.url.includes("?") ? req.url.split("?")[1] : "";
-    const url = qs ? `${base}/${path}?${qs}` : `${base}/${path}`;
+    const baseUrl = 'https://into-me-i-see-app-97c44441.base44.app';
+    const path = req.query.path || '';
+    const targetUrl = `${baseUrl}${path}${req.url.replace('/api/proxy?path=', '')}`;
 
-    const r = await fetch(url, { redirect: "follow" });
-    const buf = Buffer.from(await r.arrayBuffer());
+    const response = await fetch(targetUrl, {
+      headers: {
+        'User-Agent': req.headers['user-agent'] || '',
+        'Accept': req.headers['accept'] || '*/*',
+      },
+    });
 
-    res.status(r.status);
-    res.setHeader("Content-Type", r.headers.get("content-type") || "application/octet-stream");
-    res.setHeader("Cache-Control", r.headers.get("cache-control") || "public, max-age=31536000, immutable");
-    return res.send(buf);
-  } catch (e) {
-    return res.status(500).json({ error: "proxy_failed", detail: String(e) });
+    const contentType = response.headers.get('content-type');
+    if (contentType) res.setHeader('Content-Type', contentType);
+
+    const buffer = await response.arrayBuffer();
+    res.status(response.status).send(Buffer.from(buffer));
+  } catch (err) {
+    console.error('Proxy error:', err);
+    res.status(500).json({ error: 'Proxy failed', details: err.message });
   }
 }
-
