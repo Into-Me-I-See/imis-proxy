@@ -21,3 +21,4 @@ export default async function handler(req, res) {
     res.status(500).json({ error: 'proxy_failed', message: err.message });
   }
 }
+Fix proxy path handling for Base44 app
