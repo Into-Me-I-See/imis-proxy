@@ -1,15 +1,11 @@
 {
-  "version": 2,
-  "routes": [
-    { "src": "^/api/(.*)$", "dest": "/api/$1" },
-
-    { "src": "^/sw\\.js$", "dest": "/public/sw.js" },
-    { "src": "^/manifest\\.json$", "dest": "/public/manifest.json" },
-    { "src": "^/icon-(\\d+)x\\1\\.png$", "dest": "/public/icon-$1x$1.png" },
-
-    { "src": "^(?!/api/|/sw\\.js$|/manifest\\.json$|/icon-\\d+x\\d+\\.png$)(.*)$",
-      "dest": "/api/proxy?path=$1"
+  "headers": [
+    {
+      "source": "/sw.js",
+      "headers": [
+        { "key": "Content-Type", "value": "application/javascript; charset=utf-8" },
+        { "key": "Cache-Control", "value": "no-store" }
+      ]
     }
   ]
 }
-
