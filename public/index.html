@@ -3,18 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Into-Me-I-See</title>
-
-  <meta name="application-name" content="Into-Me-I-See" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="mobile-web-app-capable" content="yes" />
   <meta name="theme-color" content="#000000" />
-
   <link rel="manifest" href="/manifest.json" />
-
-  <link rel="icon" type="image/png" sizes="192x192" href="https://abqfbjpxlxxxqjzdpmij.supabase.co/storage/v1/object/public/app-assets/20250928_181524_0000.png" />
-  <link rel="apple-touch-icon" href="https://abqfbjpxlxxxqjzdpmij.supabase.co/storage/v1/object/public/app-assets/20250928_181524_0000.png" />
-
+  <link rel="icon" href="/favicon.ico" />
+  <title>Into-Me-I-See</title>
   <style>
     html,body{height:100%;margin:0;background:#000}
     iframe{width:100%;height:100%;border:0;display:block}
@@ -27,7 +19,7 @@
     (async () => {
       try {
         if (!('serviceWorker' in navigator)) return;
-        await navigator.serviceWorker.register('/sw.js');
+        await navigator.serviceWorker.register('/sw.js', { scope: '/' });
         await navigator.serviceWorker.ready;
 
         const perm = await Notification.requestPermission();
@@ -46,7 +38,8 @@
           return out;
         };
 
-        const sub = await (await navigator.serviceWorker.ready).pushManager.subscribe({
+        const reg = await navigator.serviceWorker.ready;
+        const sub = await reg.pushManager.subscribe({
           userVisibleOnly: true,
           applicationServerKey: toUint8(vapidPublicKey),
         });
@@ -58,6 +51,23 @@
         });
       } catch {}
     })();
+
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      const btn = document.createElement('button');
+      btn.textContent = 'Install Into-Me-I-See';
+      btn.style.cssText = 'position:fixed;inset:auto 16px 16px auto;z-index:9999';
+      btn.onclick = async () => {
+        btn.remove();
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        await deferredPrompt.userChoice;
+        deferredPrompt = null;
+      };
+      document.body.appendChild(btn);
+    });
   </script>
 </body>
 </html>
