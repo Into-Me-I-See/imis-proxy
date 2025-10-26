@@ -1,15 +1,7 @@
 {
-  "version": 2,
   "routes": [
-    { "src": "^/$", "dest": "/public/index.html" },
-    {
-      "src": "^/sw\\.js$",
-      "dest": "/public/sw.js",
-      "headers": {
-        "content-type": "application/javascript; charset=utf-8",
-        "cache-control": "public, max-age=0, must-revalidate"
-      }
-    },
-    { "src": "^/favicon\\.ico$", "dest": "/public/favicon.ico" }
+    { "src": "^/api/(.*)$", "dest": "/api/$1" },
+    { "src": "^/(sw\\.js|manifest\\.json|favicon\\.png|favicon\\.ico|icon-192x192\\.png|icon-512x512\\.png)$", "dest": "/$1" },
+    { "src": ".*", "dest": "/index.html" }
   ]
 }
