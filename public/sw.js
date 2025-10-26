@@ -3,7 +3,6 @@ const CACHE_NAME = 'imis-v1';
 self.addEventListener('install', (e) => {
   e.waitUntil(self.skipWaiting());
 });
-
 self.addEventListener('activate', (e) => {
   e.waitUntil(self.clients.claim());
 });
@@ -13,24 +12,17 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(req.url);
 
   if (url.origin !== self.location.origin) return;
-
-  // Do NOT proxy these: let the browser fetch from our domain directly.
-  const localBypass = [
-    '/sw.js',
-    '/manifest.json',
-    '/favicon.ico',
-    '/favicon.png',
-    '/icon-192x192.png',
-    '/icon-512x512.png',
-    '/apple-touch-icon.png'
-  ];
-  if (url.pathname.startsWith('/api/')) return;
-  if (localBypass.includes(url.pathname)) return;
+  if (
+    url.pathname.startsWith('/api/') ||
+    url.pathname === '/sw.js' ||
+    url.pathname === '/favicon.ico'
+  ) {
+    return;
+  }
 
   const qp = url.search ? url.search.slice(1) : '';
   const path = url.pathname || '/';
-  const proxyURL =
-    `/api/proxy?path=${encodeURIComponent(path)}${qp ? `&q=${encodeURIComponent(qp)}` : ''}`;
+  const proxyURL = `/api/proxy?path=${encodeURIComponent(path)}${qp ? `&q=${encodeURIComponent(qp)}` : ''}`;
 
   event.respondWith(fetch(proxyURL, {
     method: 'GET',
@@ -48,8 +40,8 @@ self.addEventListener('push', (e) => {
     d.title,
     {
       body: d.body,
-      icon: '/icon-192x192.png',
-      badge: '/icon-192x192.png',
+      icon: 'https://abqfbjpxlxxxqjzdpmij.supabase.co/storage/v1/object/public/app-assets/20250928_181524_0000.png',
+      badge: 'https://abqfbjpxlxxxqjzdpmij.supabase.co/storage/v1/object/public/app-assets/20250928_181524_0000.png',
       data: d.data || {}
     }
   ));
