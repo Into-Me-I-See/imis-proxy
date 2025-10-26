@@ -11,6 +11,7 @@
 </head>
 <body>
   <iframe src="/api/proxy?path=/"></iframe>
+
   <script>
     (async () => {
       try {
@@ -25,7 +26,7 @@
         if (!r.ok) return;
         const { vapidPublicKey } = await r.json();
 
-        const toU8 = (b64) => {
+        const toUint8 = (b64) => {
           const p = '='.repeat((4 - (b64.length % 4)) % 4);
           const s = (b64 + p).replace(/-/g, '+').replace(/_/g, '/');
           const raw = atob(s);
@@ -36,12 +37,12 @@
 
         const sub = await (await navigator.serviceWorker.ready).pushManager.subscribe({
           userVisibleOnly: true,
-          applicationServerKey: toU8(vapidPublicKey),
+          applicationServerKey: toUint8(vapidPublicKey),
         });
 
         await fetch('/api/subscribe', {
           method: 'POST',
-          headers: { 'content-type': 'application/json' },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(sub),
         });
       } catch {}
