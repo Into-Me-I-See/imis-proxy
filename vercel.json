@@ -1,7 +1,6 @@
 {
-  "routes": [
-    { "src": "^/api/(.*)$", "dest": "/api/$1" },
-    { "src": "^/(sw\\.js|manifest\\.json|favicon\\.png|favicon\\.ico|icon-192x192\\.png|icon-512x512\\.png)$", "dest": "/$1" },
-    { "src": ".*", "dest": "/index.html" }
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/$1" },
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
