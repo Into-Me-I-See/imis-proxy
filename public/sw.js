@@ -11,15 +11,20 @@ self.addEventListener('fetch', (event) => {
   const req = event.request;
   const url = new URL(req.url);
 
+  // Only handle same-origin
   if (url.origin !== self.location.origin) return;
-  if (
-    url.pathname.startsWith('/api/') ||
-    url.pathname === '/sw.js' ||
-    url.pathname === '/favicon.ico'
-  ) {
-    return;
-  }
 
+  // Never proxy local PWA assets
+  const local = [
+    '/sw.js',
+    '/manifest.json',
+    '/favicon.ico',
+    '/icon-192x192.png',
+    '/icon-512x512.png'
+  ];
+  if (local.includes(url.pathname) || url.pathname.startsWith('/api/')) return;
+
+  // Proxy everything else
   const qp = url.search ? url.search.slice(1) : '';
   const path = url.pathname || '/';
   const proxyURL = `/api/proxy?path=${encodeURIComponent(path)}${qp ? `&q=${encodeURIComponent(qp)}` : ''}`;
@@ -36,15 +41,12 @@ self.addEventListener('fetch', (event) => {
 self.addEventListener('push', (e) => {
   let d = { title: 'Into-Me-I-See', body: 'You have a new notification', data: {} };
   try { if (e.data) d = e.data.json(); } catch { d.body = e.data?.text() || d.body; }
-  e.waitUntil(self.registration.showNotification(
-    d.title,
-    {
-      body: d.body,
-      icon: 'https://abqfbjpxlxxxqjzdpmij.supabase.co/storage/v1/object/public/app-assets/20250928_181524_0000.png',
-      badge: 'https://abqfbjpxlxxxqjzdpmij.supabase.co/storage/v1/object/public/app-assets/20250928_181524_0000.png',
-      data: d.data || {}
-    }
-  ));
+  e.waitUntil(self.registration.showNotification(d.title, {
+    body: d.body,
+    icon: 'https://abqfbjpxlxxxqjzdpmij.supabase.co/storage/v1/object/public/app-assets/20250928_181524_0000.png',
+    badge: 'https://abqfbjpxlxxxqjzdpmij.supabase.co/storage/v1/object/public/app-assets/20250928_181524_0000.png',
+    data: d.data || {}
+  }));
 });
 
 self.addEventListener('notificationclick', (e) => {
