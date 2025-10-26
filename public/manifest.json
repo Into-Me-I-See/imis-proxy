@@ -1,8 +1,9 @@
 {
-  "id": "/",
   "name": "Into-Me-I-See",
-  "short_name": "IMIS",
-  "start_url": "/api/proxy?path=/login",
+  "short_name": "Into-Me-I-See",
+  "description": "Into-Me-I-See PWA",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#000000",
