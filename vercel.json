@@ -1,7 +1,15 @@
 {
   "version": 2,
   "routes": [
-    { "src": "^/sw\\.js$", "dest": "/public/sw.js" },
-    { "src": "^/(favicon\\.ico|robots\\.txt)$", "dest": "/public/$1" }
+    { "src": "^/$", "dest": "/public/index.html" },
+    {
+      "src": "^/sw\\.js$",
+      "dest": "/public/sw.js",
+      "headers": {
+        "content-type": "application/javascript; charset=utf-8",
+        "cache-control": "public, max-age=0, must-revalidate"
+      }
+    },
+    { "src": "^/favicon\\.ico$", "dest": "/public/favicon.ico" }
   ]
 }
