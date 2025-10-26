@@ -2,8 +2,6 @@
   "version": 2,
   "routes": [
     { "src": "^/sw\\.js$", "dest": "/public/sw.js" },
-    { "src": "^/favicon\\.ico$", "dest": "/public/favicon.ico" },
-    { "src": "^/api/(.*)$", "dest": "/api/$1" },
-    { "src": "^(?!/api/)(.*)$", "dest": "/api/proxy?path=/$1" }
+    { "src": "^/(favicon\\.ico|robots\\.txt)$", "dest": "/public/$1" }
   ]
 }
