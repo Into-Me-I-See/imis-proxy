@@ -1,10 +1,12 @@
 const CACHE_NAME = 'imis-v1';
+const ICON_URL = 'https://abqfbjpxlxxxqjzdpmij.supabase.co/storage/v1/object/public/app-assets/20250928_181524_0000.png';
 
-self.addEventListener('install', (e) => {
-  e.waitUntil(self.skipWaiting());
+self.addEventListener('install', (event) => {
+  event.waitUntil(self.skipWaiting());
 });
-self.addEventListener('activate', (e) => {
-  e.waitUntil(self.clients.claim());
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(self.clients.claim());
 });
 
 self.addEventListener('fetch', (event) => {
@@ -12,6 +14,7 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(req.url);
 
   if (url.origin !== self.location.origin) return;
+
   if (
     url.pathname.startsWith('/api/') ||
     url.pathname === '/sw.js' ||
@@ -33,22 +36,29 @@ self.addEventListener('fetch', (event) => {
   }));
 });
 
-self.addEventListener('push', (e) => {
-  let d = { title: 'Into-Me-I-See', body: 'You have a new notification', data: {} };
-  try { if (e.data) d = e.data.json(); } catch { d.body = e.data?.text() || d.body; }
-  e.waitUntil(self.registration.showNotification(
-    d.title,
-    {
-      body: d.body,
-      icon: '/icon-192x192.png',
-      badge: '/icon-192x192.png',
-      data: d.data || {}
-    }
-  ));
+self.addEventListener('push', (event) => {
+  let data = { title: 'Into-Me-I-See', body: 'You have a new notification 💛', data: {} };
+
+  try {
+    if (event.data) data = event.data.json();
+  } catch {
+    data.body = event.data?.text() || data.body;
+  }
+
+  event.waitUntil(
+    self.registration.showNotification(data.title, {
+      body: data.body,
+      icon: ICON_URL,
+      badge: ICON_URL,
+      data: data.data || {},
+      vibrate: [200, 100, 200],
+      requireInteraction: false,
+    })
+  );
 });
 
-self.addEventListener('notificationclick', (e) => {
-  e.notification.close();
-  const url = e.notification.data?.url || '/';
-  e.waitUntil(clients.openWindow(url));
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const targetUrl = event.notification.data?.url || '/';
+  event.waitUntil(clients.openWindow(targetUrl));
 });
