@@ -3,7 +3,7 @@ export default async function handler(req, res) {
 
   const url = new URL(req.url, 'http://local');
   const raw = url.searchParams.get('path') || '/';
-  const q   = url.searchParams.get('q');
+  const q = url.searchParams.get('q');
   const path = raw.startsWith('/') ? raw : `/${raw}`;
   const target = `${BASE}${path}${q ? `?${q}` : ''}`;
 
