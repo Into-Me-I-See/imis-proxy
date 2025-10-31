@@ -1,76 +1,93 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="theme-color" content="#000000" />
-  <link rel="manifest" href="/manifest.json" />
-  <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png?v=2">
-  <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png?v=2">
-  <link rel="icon" href="/favicon.ico?v=2">
-  <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png?v=2">
-  <title>Into-Me-I-See</title>
-  <style>
-    html,body{height:100%;margin:0;background:#000}
-    iframe{width:100%;height:100%;border:0;display:block}
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Into-Me-I-See</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#000000">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='32' fill='%23000'/%3E%3Ccircle cx='32' cy='32' r='18' fill='%23ffb01f'/%3E%3Ccircle cx='32' cy='32' r='6' fill='%23000'/%3E%3C/svg%3E">
+<style>
+  :root{--amber1:#ffb01f;--amber2:#ff8a00;--bg:#000;--card:#0b0b0b;--text:#fff}
+  html,body{height:100%}
+  body{margin:0;background:#000;color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;display:flex;align-items:center;justify-content:center}
+  .wrap{max-width:560px;width:100%;padding:24px}
+  .card{background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.08);border-radius:24px;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+  .logo{width:56px;height:56px;border-radius:14px;background:linear-gradient(135deg,var(--amber1),var(--amber2));display:flex;align-items:center;justify-content:center;color:#000;font-weight:900}
+  h1{margin:16px 0 8px;font-size:28px;letter-spacing:.3px}
+  p{margin:0 0 18px;opacity:.85;line-height:1.5}
+  .actions{display:flex;gap:12px;flex-wrap:wrap}
+  .btn{appearance:none;border:0;border-radius:9999px;padding:14px 22px;font-weight:700;cursor:pointer;transition:transform .06s ease,opacity .2s}
+  .btn:active{transform:translateY(1px)}
+  .btn-primary{background:linear-gradient(90deg,var(--amber1),var(--amber2));color:#000;box-shadow:0 8px 24px rgba(255,138,0,.35)}
+  .btn-ghost{background:#0b0b0b;border:1px solid #333;color:#ffd166}
+  .modal{position:fixed;inset:0;display:none;background:rgba(0,0,0,.6);z-index:50}
+  .modal-card{max-width:520px;margin:8vh auto;background:var(--card);border-radius:20px;padding:24px;border:1px solid rgba(255,255,255,.06)}
+  .modal h3{margin:0 0 8px;font-size:20px}
+  ol{margin:0 0 12px 20px}
+</style>
 </head>
 <body>
-  <iframe src="/api/proxy?path=/"></iframe>
+  <div class="wrap">
+    <div class="card">
+      <div class="logo">◎</div>
+      <h1>Into-Me-I-See</h1>
+      <p>Install the app for a full-screen experience and enable notifications to receive gentle practice reminders.</p>
+      <div class="actions">
+        <button id="pwa-install" class="btn btn-primary" style="display:none">Install the App</button>
+        <button id="enable-push" class="btn btn-ghost" style="display:none">Enable notifications</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="ios-a2hs" class="modal">
+    <div class="modal-card">
+      <h3>Add to Home Screen</h3>
+      <p>Open this page in Safari and follow the steps:</p>
+      <ol>
+        <li>Tap <b>Share</b> (square with arrow).</li>
+        <li>Choose <b>Add to Home Screen</b>.</li>
+        <li>Tap <b>Add</b>, then open the app from your Home Screen.</li>
+      </ol>
+      <button id="ios-a2hs-close" class="btn btn-ghost">Got it</button>
+    </div>
+  </div>
 
   <script>
-    (async () => {
-      try {
-        if (!('serviceWorker' in navigator)) return;
-        await navigator.serviceWorker.register('/sw.js', { scope: '/' });
-        await navigator.serviceWorker.ready;
+    let deferredPrompt=null;
+    const installBtn=document.getElementById('pwa-install');
+    const pushBtn=document.getElementById('enable-push');
+    const iosModal=document.getElementById('ios-a2hs');
+    const iosClose=document.getElementById('ios-a2hs-close');
+    function isIOS(){return /iphone|ipad|ipod/i.test(navigator.userAgent)}
+    function isStandalone(){return matchMedia('(display-mode: standalone)').matches||navigator.standalone}
 
-        const perm = await Notification.requestPermission();
-        if (perm !== 'granted') return;
+    window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();deferredPrompt=e;installBtn.style.display='inline-flex'});
+    if(isStandalone()) installBtn.style.display='none';
 
-        const r = await fetch('/api/public-key');
-        if (!r.ok) return;
-        const { vapidPublicKey } = await r.json();
+    installBtn.addEventListener('click',async()=>{if(deferredPrompt){deferredPrompt.prompt();await deferredPrompt.userChoice;deferredPrompt=null}else if(isIOS()&&!isStandalone()){iosModal.style.display='block'}else{alert('Install not available on this browser.')}})
+    iosClose.addEventListener('click',()=>iosModal.style.display='none');
 
-        const toUint8 = (b64) => {
-          const p = '='.repeat((4 - (b64.length % 4)) % 4);
-          const s = (b64 + p).replace(/-/g, '+').replace(/_/g, '/');
-          const raw = atob(s);
-          const out = new Uint8Array(raw.length);
-          for (let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
-          return out;
-        };
-
-        const reg = await navigator.serviceWorker.ready;
-        const sub = await reg.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: toUint8(vapidPublicKey),
-        });
-
-        await fetch('/api/subscribe', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(sub),
-        });
-      } catch {}
+    (function init(){
+      if(!isStandalone()) installBtn.style.display='inline-flex';
+      const canPush=('Notification'in window)&&('serviceWorker'in navigator)&&('PushManager'in window);
+      if(canPush&&(!isIOS()||isStandalone())) pushBtn.style.display='inline-flex';
     })();
 
-    let deferredPrompt;
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      deferredPrompt = e;
-      const btn = document.createElement('button');
-      btn.textContent = 'Install Into-Me-I-See';
-      btn.style.cssText = 'position:fixed;inset:auto 16px 16px auto;z-index:9999';
-      btn.onclick = async () => {
-        btn.remove();
-        if (!deferredPrompt) return;
-        deferredPrompt.prompt();
-        await deferredPrompt.userChoice;
-        deferredPrompt = null;
-      };
-      document.body.appendChild(btn);
+    const VAPID_PUBLIC_KEY='REPLACE_WITH_YOUR_BASE64URL_PUBLIC_KEY';
+    pushBtn.addEventListener('click',async()=>{
+      if(isIOS()&&!isStandalone()){iosModal.style.display='block';return}
+      if(!('Notification'in window)||!('serviceWorker'in navigator)||!('PushManager'in window)){alert('Notifications not supported on this device/browser.');return}
+      const perm=await Notification.requestPermission(); if(perm!=='granted'){alert('Notifications were blocked.');return}
+      const reg=await navigator.serviceWorker.ready;
+      const sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:(function(s){const p='='.repeat((4-s.length%4)%4);const b=(s+p).replace(/-/g,'+').replace(/_/g,'/');const r=atob(b);const a=new Uint8Array(r.length);for(let i=0;i<r.length;i++)a[i]=r.charCodeAt(i);return a})(VAPID_PUBLIC_KEY)});
+      await fetch('/api/saveSubscription',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(sub)});
+      alert('Notifications enabled ✅');
     });
+
+    if('serviceWorker'in navigator){
+      window.addEventListener('load',()=>{navigator.serviceWorker.register('/sw.js',{scope:'/'}).catch(()=>{})});
+    }
   </script>
 </body>
 </html>
