@@ -74,7 +74,8 @@
       if(canPush&&(!isIOS()||isStandalone())) pushBtn.style.display='inline-flex';
     })();
 
-    const VAPID_PUBLIC_KEY='REPLACE_WITH_YOUR_BASE64URL_PUBLIC_KEY';
+    const VAPID_PUBLIC_KEY='B2KixEyWPAKic1sl1p9xH4eHtohQskYW0OH9jKjoE9PHP_SF_vZtvVRbpEj3_lNyjDu0GQAFu4Qb84NB0uig
+';
     pushBtn.addEventListener('click',async()=>{
       if(isIOS()&&!isStandalone()){iosModal.style.display='block';return}
       if(!('Notification'in window)||!('serviceWorker'in navigator)||!('PushManager'in window)){alert('Notifications not supported on this device/browser.');return}
