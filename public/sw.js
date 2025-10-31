@@ -3,6 +3,7 @@ const CACHE_NAME = 'imis-v1';
 self.addEventListener('install', (e) => {
   e.waitUntil(self.skipWaiting());
 });
+
 self.addEventListener('activate', (e) => {
   e.waitUntil(self.clients.claim());
 });
@@ -10,47 +11,40 @@ self.addEventListener('activate', (e) => {
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   const url = new URL(req.url);
-
-  // Only handle same-origin
-  if (url.origin !== self.location.origin) return;
-
-  // Never proxy local PWA assets
-  const local = [
-    '/sw.js',
-    '/manifest.json',
-    '/favicon.ico',
-    '/icon-192x192.png',
-    '/icon-512x512.png'
-  ];
+  const origin = self.location.origin;
+  if (url.origin !== origin) return;
+  const local = ['/sw.js', '/manifest.json', '/favicon.ico', '/icon-192x192.png', '/icon-512x512.png'];
   if (local.includes(url.pathname) || url.pathname.startsWith('/api/')) return;
-
-  // Proxy everything else
-  const qp = url.search ? url.search.slice(1) : '';
-  const path = url.pathname || '/';
-  const proxyURL = `/api/proxy?path=${encodeURIComponent(path)}${qp ? `&q=${encodeURIComponent(qp)}` : ''}`;
-
-  event.respondWith(fetch(proxyURL, {
-    method: 'GET',
-    headers: {
-      'accept': req.headers.get('accept') || '*/*',
-      'cache-control': 'no-cache'
-    }
-  }));
+  event.respondWith(fetch(req));
 });
 
 self.addEventListener('push', (e) => {
-  let d = { title: 'Into-Me-I-See', body: 'You have a new notification', data: {} };
-  try { if (e.data) d = e.data.json(); } catch { d.body = e.data?.text() || d.body; }
-  e.waitUntil(self.registration.showNotification(d.title, {
-    body: d.body,
-    icon: 'https://abqfbjpxlxxxqjzdpmij.supabase.co/storage/v1/object/public/app-assets/20250928_181524_0000.png',
-    badge: 'https://abqfbjpxlxxxqjzdpmij.supabase.co/storage/v1/object/public/app-assets/20250928_181524_0000.png',
-    data: d.data || {}
-  }));
+  let d = {};
+  try { d = e.data.json(); } catch {}
+  const title = d.title || 'Into-Me-I-See';
+  const body = d.body || 'You have a new notification';
+  const icon = d.icon || '/icons/icon-192.png';
+  const image = d.image || '/icons/icon-512.png';
+  const data = d.data || {};
+  e.waitUntil(
+    self.registration.showNotification(title, {
+      body: body,
+      icon: icon,
+      image: image,
+      badge: icon,
+      data: data,
+    })
+  );
 });
 
 self.addEventListener('notificationclick', (e) => {
   e.notification.close();
-  const url = e.notification.data?.url || '/';
-  e.waitUntil(clients.openWindow(url));
+  const url = e.notification.data.url || '/';
+  e.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
+      const client = list.find((w) => w.url.includes(url));
+      return client ? client.focus() : clients.openWindow(url);
+    })
+  );
 });
+
