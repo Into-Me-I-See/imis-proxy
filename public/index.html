@@ -40,6 +40,7 @@
       <h1 id="t-title">Into-Me-I-See</h1>
       <p id="t-sub">Install the app for a full-screen experience and enable notifications to receive gentle practice reminders.</p>
       <div class="actions">
+        <button id="open-app" class="btn btn-primary">Open the App</button>
         <button id="pwa-install" class="btn btn-primary">Install the App</button>
         <button id="enable-push" class="btn btn-ghost">Enable notifications</button>
       </div>
@@ -47,10 +48,13 @@
   </div>
 
   <script>
+    const APP_URL = '/app';
+
     const strings = {
       en: {
         title: "Into-Me-I-See",
         sub: "Install the app for a full-screen experience and enable notifications to receive gentle practice reminders.",
+        open_app: "Open the App",
         install_android: "Install the App",
         install_ios: "Add to Home Screen",
         push: "Enable notifications",
@@ -59,13 +63,12 @@
         ios_popup_text: "In Safari, tap Share ⬆️ → Add to Home Screen, then open the app from your Home Screen. After it opens, tap “Enable notifications”.",
         ios_popup_cta: "Got it 💛",
         inapp_banner: "Open this page in Safari/Chrome to install and enable notifications.",
-        inapp_copy: "Copy Link",
-        android_tip_title: "Tip: Install Into-Me-I-See",
-        android_tip_text: "Tap “Install the App”, then “Enable notifications” for daily guidance."
+        inapp_copy: "Copy Link"
       },
       fr: {
         title: "Into-Me-I-See",
         sub: "Installe l’app pour une expérience plein écran et active les notifications pour recevoir de doux rappels de pratique.",
+        open_app: "Ouvrir l’app",
         install_android: "Installer l’app",
         install_ios: "Ajouter à l’écran d’accueil",
         push: "Activer les notifications",
@@ -74,9 +77,7 @@
         ios_popup_text: "Dans Safari, touche Partager ⬆️ → Ajouter à l’écran d’accueil, puis ouvre l’app depuis ton écran d’accueil. Ensuite, touche « Activer les notifications ».",
         ios_popup_cta: "Compris 💛",
         inapp_banner: "Ouvre cette page dans Safari/Chrome pour installer et activer les notifications.",
-        inapp_copy: "Copier le lien",
-        android_tip_title: "Astuce : Installe Into-Me-I-See",
-        android_tip_text: "Touchez « Installer l’app », puis « Activer les notifications » pour un accompagnement quotidien."
+        inapp_copy: "Copier le lien"
       }
     };
 
@@ -99,6 +100,7 @@
 
     const titleEl = document.getElementById('t-title');
     const subEl = document.getElementById('t-sub');
+    const openBtn = document.getElementById('open-app');
     const installBtn = document.getElementById('pwa-install');
     const pushBtn = document.getElementById('enable-push');
     const langEN = document.getElementById('lang-en');
@@ -107,22 +109,28 @@
     function applyLang(){
       titleEl.textContent = t().title;
       subEl.textContent = t().sub;
+      openBtn.textContent = t().open_app;
       installBtn.textContent = isIOS() ? t().install_ios : t().install_android;
-      if(isIOS() && !isStandalone()){
-        pushBtn.textContent = t().push_after_install;
-      } else {
-        pushBtn.textContent = t().push;
-      }
+      if(isIOS() && !isStandalone()){ pushBtn.textContent = t().push_after_install; } else { pushBtn.textContent = t().push; }
       if(lang==='en'){ langEN.classList.add('active'); langFR.classList.remove('active'); }
       else { langFR.classList.add('active'); langEN.classList.remove('active'); }
       document.documentElement.setAttribute('lang', lang);
     }
-
     langEN.onclick = () => { lang='en'; localStorage.setItem('imis_lang', lang); applyLang(); };
     langFR.onclick = () => { lang='fr'; localStorage.setItem('imis_lang', lang); applyLang(); };
 
+    if (isStandalone()) { location.replace(APP_URL); }
+    if (localStorage.getItem('imis_installed') === '1') { location.replace(APP_URL); }
+
+    window.addEventListener('appinstalled', () => {
+      localStorage.setItem('imis_installed','1');
+      location.replace(APP_URL);
+    });
+
+    openBtn.addEventListener('click', () => { location.href = APP_URL; });
+
     let deferredPrompt=null;
-    window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; installBtn.textContent = isIOS()? t().install_ios : t().install_android; });
+    window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; installBtn.textContent = isIOS()? strings[lang].install_ios : strings[lang].install_android; });
 
     if(isStandalone()){ installBtn.style.display='none'; } else { installBtn.style.display='inline-flex'; }
 
@@ -161,7 +169,10 @@
     installBtn.addEventListener('click', async () => {
       if(deferredPrompt){
         deferredPrompt.prompt();
-        await deferredPrompt.userChoice;
+        const choice = await deferredPrompt.userChoice;
+        if (choice && choice.outcome === 'accepted') {
+          localStorage.setItem('imis_installed','1');
+        }
         deferredPrompt=null;
       } else if(isIOS() && !isStandalone()){
         showPersistentPopup();
@@ -210,14 +221,13 @@
       div.style.fontWeight='600';
       div.style.zIndex='60';
       div.style.backdropFilter='blur(6px)';
-      div.innerHTML = t().inapp_banner + ' <button id="copylink" style="margin-left:10px;border:1px solid #444;border-radius:999px;background:#0b0b0b;color:#ffd166;font-weight:700;padding:8px 12px;cursor:pointer">'+t().inapp_copy+'</button>';
+      div.innerHTML = strings[lang].inapp_banner + ' <button id="copylink" style="margin-left:10px;border:1px solid #444;border-radius:999px;background:#0b0b0b;color:#ffd166;font-weight:700;padding:8px 12px;cursor:pointer">'+strings[lang].inapp_copy+'</button>';
       document.body.appendChild(div);
       const btn=document.getElementById('copylink');
       if(btn){ btn.onclick = async () => { await navigator.clipboard.writeText(location.href); div.innerHTML = (lang==='fr'?'Lien copié. Ouvre Safari/Chrome et colle pour continuer.':'Link copied. Open Safari/Chrome and paste to continue.'); }; }
     }
     if(isInAppBrowser()) suggestOpenExternally();
 
-    if(isIOS() && !isStandalone()){ pushBtn.textContent = t().push_after_install; }
     applyLang();
   </script>
 </body>
