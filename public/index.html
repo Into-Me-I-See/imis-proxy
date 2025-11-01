@@ -159,5 +159,81 @@
       if(p){p.disabled=true;p.textContent='Enable notifications (after Add to Home Screen)';}
     }
   </script>
+
+  <script>
+  // ✨ iOS popup (gentle reminder)
+  (function showIOSGuide(){
+    const isiOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+    const isStandalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone;
+    if(!isiOS||isStandalone) return;
+
+    const popup=document.createElement('div');
+    popup.style.position='fixed';
+    popup.style.bottom='20px';
+    popup.style.left='50%';
+    popup.style.transform='translateX(-50%)';
+    popup.style.background='rgba(0,0,0,0.9)';
+    popup.style.border='1px solid rgba(255,176,31,0.5)';
+    popup.style.borderRadius='16px';
+    popup.style.padding='18px 22px';
+    popup.style.width='90%';
+    popup.style.maxWidth='340px';
+    popup.style.color='#fff';
+    popup.style.fontSize='15px';
+    popup.style.fontWeight='500';
+    popup.style.textAlign='center';
+    popup.style.boxShadow='0 8px 24px rgba(0,0,0,.6)';
+    popup.style.zIndex='99';
+    popup.style.opacity='0';
+    popup.style.transition='opacity 0.8s ease';
+    popup.innerHTML=`
+      <div style="margin-bottom:8px;font-weight:700;color:#ffb01f;">✨ Add Into-Me-I-See to your Home Screen</div>
+      <div style="line-height:1.5;margin-bottom:8px;">Open this page in <b>Safari</b>, tap <b>Share</b> <span style="font-size:18px;">⬆️</span> → <b>Add to Home Screen</b>.</div>
+      <button id="closePopup" style="background:linear-gradient(90deg,#ffb01f,#ff8a00);border:0;border-radius:9999px;padding:8px 14px;font-weight:700;color:#000;cursor:pointer;">Got it 💛</button>
+    `;
+    document.body.appendChild(popup);
+    setTimeout(()=>{popup.style.opacity='1';},500);
+    const closePopup=()=>{popup.style.opacity='0';setTimeout(()=>popup.remove(),600);};
+    document.getElementById('closePopup').onclick=closePopup;
+    setTimeout(closePopup,10000);
+  })();
+
+  // 🌞 Android popup
+  (function showAndroidGuide(){
+    const isAndroid=/android/i.test(navigator.userAgent);
+    const isStandalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone;
+    if(!isAndroid||isStandalone) return;
+
+    const popup=document.createElement('div');
+    popup.style.position='fixed';
+    popup.style.bottom='20px';
+    popup.style.left='50%';
+    popup.style.transform='translateX(-50%)';
+    popup.style.background='rgba(0,0,0,0.9)';
+    popup.style.border='1px solid rgba(255,176,31,0.5)';
+    popup.style.borderRadius='16px';
+    popup.style.padding='18px 22px';
+    popup.style.width='90%';
+    popup.style.maxWidth='340px';
+    popup.style.color='#fff';
+    popup.style.fontSize='15px';
+    popup.style.fontWeight='500';
+    popup.style.textAlign='center';
+    popup.style.boxShadow='0 8px 24px rgba(0,0,0,.6)';
+    popup.style.zIndex='99';
+    popup.style.opacity='0';
+    popup.style.transition='opacity 0.8s ease';
+    popup.innerHTML=`
+      <div style="margin-bottom:8px;font-weight:700;color:#ffb01f;">💛 Tip: Install Into-Me-I-See</div>
+      <div style="line-height:1.5;margin-bottom:8px;">Tap <b>"Install the App"</b> below, then <b>"Enable notifications"</b> for daily guidance.</div>
+      <button id="closeAndroid" style="background:linear-gradient(90deg,#ffb01f,#ff8a00);border:0;border-radius:9999px;padding:8px 14px;font-weight:700;color:#000;cursor:pointer;">Got it 💛</button>
+    `;
+    document.body.appendChild(popup);
+    setTimeout(()=>{popup.style.opacity='1';},500);
+    const closePopup=()=>{popup.style.opacity='0';setTimeout(()=>popup.remove(),600);};
+    document.getElementById('closeAndroid').onclick=closePopup;
+    setTimeout(closePopup,10000);
+  })();
+  </script>
 </body>
 </html>
