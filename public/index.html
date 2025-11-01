@@ -91,12 +91,13 @@
 
     const VAPID_PUBLIC_KEY='B2KixEyWPAKic1sl1p9xH4eHtohQskYW0OH9jKjoE9PHP_SF_vZtvVRbpEj3_lNyjDu0GQAFu4Qb84NB0uig';
 
-    function b64ToUint8Array(s){
-      const p='='.repeat((4-s.length%4)%4);
-      const b=(s+p).replace(/-/g,'+').replace(/_/g,'/');
-      const r=atob(b);const a=new Uint8Array(r.length);
-      for(let i=0;i<r.length;i++)a[i]=r.charCodeAt(i);
-      return a;
+    function base64UrlToUint8Array(input){
+      const s=input.trim().replace(/\s+/g,'').replace(/-/g,'+').replace(/_/g,'/');
+      const padded=s+'='.repeat((4-(s.length%4))%4);
+      const raw=atob(padded);
+      const out=new Uint8Array(raw.length);
+      for(let i=0;i<raw.length;i++) out[i]=raw.charCodeAt(i);
+      return out;
     }
 
     async function enablePush(){
@@ -105,7 +106,9 @@
       const perm=await Notification.requestPermission();
       if(perm!=='granted'){alert('Notifications were blocked.');return}
       const reg=await navigator.serviceWorker.ready;
-      const sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64ToUint8Array(VAPID_PUBLIC_KEY)});
+      const appServerKey=base64UrlToUint8Array(VAPID_PUBLIC_KEY);
+      if(appServerKey.length!==65){console.error('VAPID key must decode to 65 bytes, got',appServerKey.length);alert('VAPID key format issue.');return}
+      const sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:appServerKey});
       await fetch('/api/saveSubscription',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(sub)});
       alert('Notifications enabled ✅');
     }
