@@ -107,7 +107,7 @@
       if(perm!=='granted'){alert('Notifications were blocked.');return}
       const reg=await navigator.serviceWorker.ready;
       const appServerKey=base64UrlToUint8Array(VAPID_PUBLIC_KEY);
-      if(appServerKey.length!==65){console.error('VAPID key must decode to 65 bytes, got',appServerKey.length);alert('VAPID key format issue.');return}
+      if(appServerKey.length!==65){alert('VAPID key format issue.');return}
       const sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:appServerKey});
       await fetch('/api/saveSubscription',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(sub)});
       alert('Notifications enabled ✅');
@@ -125,6 +125,38 @@
     }
     if(isIOS()&&!isStandalone()){
       pushBtn.textContent='Enable notifications (after install)';
+    }
+  </script>
+
+  <script>
+    function isInAppBrowser(){
+      const ua=navigator.userAgent.toLowerCase();
+      return ua.includes('fbav')||ua.includes('fban')||ua.includes('instagram')||ua.includes('line/')||ua.includes('twitter');
+    }
+    function suggestOpenExternally(){
+      const div=document.createElement('div');
+      div.style.position='fixed';
+      div.style.left='50%';
+      div.style.bottom='20px';
+      div.style.transform='translateX(-50%)';
+      div.style.background='rgba(0,0,0,.85)';
+      div.style.border='1px solid #333';
+      div.style.borderRadius='14px';
+      div.style.padding='12px 16px';
+      div.style.color='#fff';
+      div.style.fontWeight='600';
+      div.style.zIndex='60';
+      div.style.backdropFilter='blur(6px)';
+      div.innerHTML='Open this page in Safari/Chrome to install and enable notifications. <button id="copylink" style="margin-left:10px;border:1px solid #444;border-radius:999px;background:#0b0b0b;color:#ffd166;font-weight:700;padding:8px 12px;cursor:pointer">Copy Link</button>';
+      document.body.appendChild(div);
+      const btn=document.getElementById('copylink');
+      if(btn){btn.onclick=async()=>{await navigator.clipboard.writeText(location.href);div.innerHTML='Link copied. Open Safari/Chrome and paste to continue.';};}
+    }
+    if(isInAppBrowser()) suggestOpenExternally();
+
+    if(/iphone|ipad|ipod/i.test(navigator.userAgent) && !(matchMedia('(display-mode: standalone)').matches||navigator.standalone)){
+      const p=document.getElementById('enable-push');
+      if(p){p.disabled=true;p.textContent='Enable notifications (after Add to Home Screen)';}
     }
   </script>
 </body>
