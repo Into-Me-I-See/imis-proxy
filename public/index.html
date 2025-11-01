@@ -22,10 +22,6 @@
   .btn:active{transform:translateY(1px)}
   .btn-primary{background:linear-gradient(90deg,var(--amber1),var(--amber2));color:#000;box-shadow:0 8px 24px rgba(255,138,0,.35)}
   .btn-ghost{background:#0b0b0b;border:1px solid #333;color:#ffd166}
-  .modal{position:fixed;inset:0;display:none;background:rgba(0,0,0,.6);z-index:50}
-  .modal-card{max-width:520px;margin:8vh auto;background:var(--card);border-radius:20px;padding:24px;border:1px solid rgba(255,255,255,.06)}
-  .modal h3{margin:0 0 8px;font-size:20px}
-  ol{margin:0 0 12px 20px}
 </style>
 </head>
 <body>
@@ -43,27 +39,13 @@
     </div>
   </div>
 
-  <div id="ios-a2hs" class="modal">
-    <div class="modal-card">
-      <h3>Add to Home Screen</h3>
-      <p>Open this page in Safari and follow the steps:</p>
-      <ol>
-        <li>Tap <b>Share</b> (square with arrow).</li>
-        <li>Choose <b>Add to Home Screen</b>.</li>
-        <li>Tap <b>Add</b>, then open the app from your Home Screen.</li>
-      </ol>
-      <button id="ios-a2hs-close" class="btn btn-ghost">Got it</button>
-    </div>
-  </div>
-
   <script>
     let deferredPrompt=null;
     const installBtn=document.getElementById('pwa-install');
     const pushBtn=document.getElementById('enable-push');
-    const iosModal=document.getElementById('ios-a2hs');
-    const iosClose=document.getElementById('ios-a2hs-close');
 
     function isIOS(){return /iphone|ipad|ipod/i.test(navigator.userAgent)}
+    function isAndroid(){return /android/i.test(navigator.userAgent)}
     function isStandalone(){return matchMedia('(display-mode: standalone)').matches||navigator.standalone}
 
     window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();deferredPrompt=e;installBtn.textContent='Install the App'});
@@ -75,19 +57,48 @@
       installBtn.textContent=isIOS()?'Add to Home Screen':'Install the App';
     }
 
+    function showIOSBottomPopup(){
+      if(document.getElementById('imis-ios-popup')) return;
+      const popup=document.createElement('div');
+      popup.id='imis-ios-popup';
+      popup.style.position='fixed';
+      popup.style.left='50%';
+      popup.style.bottom='20px';
+      popup.style.transform='translateX(-50%)';
+      popup.style.background='rgba(0,0,0,0.9)';
+      popup.style.border='1px solid rgba(255,176,31,0.5)';
+      popup.style.borderRadius='16px';
+      popup.style.padding='18px 22px';
+      popup.style.width='90%';
+      popup.style.maxWidth='360px';
+      popup.style.color='#fff';
+      popup.style.fontSize='15px';
+      popup.style.fontWeight='500';
+      popup.style.textAlign='center';
+      popup.style.boxShadow='0 8px 24px rgba(0,0,0,.6)';
+      popup.style.zIndex='99';
+      popup.style.opacity='0';
+      popup.style.transition='opacity .3s ease';
+      popup.innerHTML=
+        '<div style="margin-bottom:8px;font-weight:700;color:#ffb01f;">Add Into-Me-I-See to your Home Screen</div>'+
+        '<div style="line-height:1.5;margin-bottom:10px;">In Safari, tap <b>Share</b> ⬆️ → <b>Add to Home Screen</b>, then open the app from your Home Screen.</div>'+
+        '<button id="imis-ios-close" style="background:linear-gradient(90deg,#ffb01f,#ff8a00);border:0;border-radius:9999px;padding:9px 16px;font-weight:700;color:#000;cursor:pointer;">Got it 💛</button>';
+      document.body.appendChild(popup);
+      requestAnimationFrame(()=>{popup.style.opacity='1';});
+      document.getElementById('imis-ios-close').onclick=()=>{popup.style.opacity='0';setTimeout(()=>popup.remove(),200);}
+    }
+
     installBtn.addEventListener('click',async()=>{
       if(deferredPrompt){
         deferredPrompt.prompt();
         await deferredPrompt.userChoice;
         deferredPrompt=null;
       }else if(isIOS()&&!isStandalone()){
-        iosModal.style.display='block';
+        showIOSBottomPopup();
       }else{
         alert('Install not available on this browser.');
       }
     });
-
-    iosClose.addEventListener('click',()=>iosModal.style.display='none');
 
     const VAPID_PUBLIC_KEY='BG9Ke25lIFppz2UUG_OsqbM7YelVtH2DPpkWRYbkVv2rDMN-3MCVgTUSoOF3dRQ4dJobOEbt_sA36MDbmtLzs4g';
 
@@ -101,7 +112,7 @@
     }
 
     async function enablePush(){
-      if(isIOS()&&!isStandalone()){iosModal.style.display='block';return}
+      if(isIOS()&&!isStandalone()){showIOSBottomPopup();return}
       if(!('Notification'in window)||!('serviceWorker'in navigator)||!('PushManager'in window)){alert('Notifications not supported on this device/browser.');return}
       const perm=await Notification.requestPermission();
       if(perm!=='granted'){alert('Notifications were blocked.');return}
@@ -124,7 +135,7 @@
       pushBtn.style.display='none';
     }
     if(isIOS()&&!isStandalone()){
-      pushBtn.textContent='Enable notifications (after install)';
+      pushBtn.textContent='Enable notifications (after Add to Home Screen)';
     }
   </script>
 
@@ -158,82 +169,6 @@
       const p=document.getElementById('enable-push');
       if(p){p.disabled=true;p.textContent='Enable notifications (after Add to Home Screen)';}
     }
-  </script>
-
-  <script>
-  // ✨ iOS popup (gentle reminder)
-  (function showIOSGuide(){
-    const isiOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
-    const isStandalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone;
-    if(!isiOS||isStandalone) return;
-
-    const popup=document.createElement('div');
-    popup.style.position='fixed';
-    popup.style.bottom='20px';
-    popup.style.left='50%';
-    popup.style.transform='translateX(-50%)';
-    popup.style.background='rgba(0,0,0,0.9)';
-    popup.style.border='1px solid rgba(255,176,31,0.5)';
-    popup.style.borderRadius='16px';
-    popup.style.padding='18px 22px';
-    popup.style.width='90%';
-    popup.style.maxWidth='340px';
-    popup.style.color='#fff';
-    popup.style.fontSize='15px';
-    popup.style.fontWeight='500';
-    popup.style.textAlign='center';
-    popup.style.boxShadow='0 8px 24px rgba(0,0,0,.6)';
-    popup.style.zIndex='99';
-    popup.style.opacity='0';
-    popup.style.transition='opacity 0.8s ease';
-    popup.innerHTML=`
-      <div style="margin-bottom:8px;font-weight:700;color:#ffb01f;">✨ Add Into-Me-I-See to your Home Screen</div>
-      <div style="line-height:1.5;margin-bottom:8px;">Open this page in <b>Safari</b>, tap <b>Share</b> <span style="font-size:18px;">⬆️</span> → <b>Add to Home Screen</b>.</div>
-      <button id="closePopup" style="background:linear-gradient(90deg,#ffb01f,#ff8a00);border:0;border-radius:9999px;padding:8px 14px;font-weight:700;color:#000;cursor:pointer;">Got it 💛</button>
-    `;
-    document.body.appendChild(popup);
-    setTimeout(()=>{popup.style.opacity='1';},500);
-    const closePopup=()=>{popup.style.opacity='0';setTimeout(()=>popup.remove(),600);};
-    document.getElementById('closePopup').onclick=closePopup;
-    setTimeout(closePopup,10000);
-  })();
-
-  // 🌞 Android popup
-  (function showAndroidGuide(){
-    const isAndroid=/android/i.test(navigator.userAgent);
-    const isStandalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone;
-    if(!isAndroid||isStandalone) return;
-
-    const popup=document.createElement('div');
-    popup.style.position='fixed';
-    popup.style.bottom='20px';
-    popup.style.left='50%';
-    popup.style.transform='translateX(-50%)';
-    popup.style.background='rgba(0,0,0,0.9)';
-    popup.style.border='1px solid rgba(255,176,31,0.5)';
-    popup.style.borderRadius='16px';
-    popup.style.padding='18px 22px';
-    popup.style.width='90%';
-    popup.style.maxWidth='340px';
-    popup.style.color='#fff';
-    popup.style.fontSize='15px';
-    popup.style.fontWeight='500';
-    popup.style.textAlign='center';
-    popup.style.boxShadow='0 8px 24px rgba(0,0,0,.6)';
-    popup.style.zIndex='99';
-    popup.style.opacity='0';
-    popup.style.transition='opacity 0.8s ease';
-    popup.innerHTML=`
-      <div style="margin-bottom:8px;font-weight:700;color:#ffb01f;">💛 Tip: Install Into-Me-I-See</div>
-      <div style="line-height:1.5;margin-bottom:8px;">Tap <b>"Install the App"</b> below, then <b>"Enable notifications"</b> for daily guidance.</div>
-      <button id="closeAndroid" style="background:linear-gradient(90deg,#ffb01f,#ff8a00);border:0;border-radius:9999px;padding:8px 14px;font-weight:700;color:#000;cursor:pointer;">Got it 💛</button>
-    `;
-    document.body.appendChild(popup);
-    setTimeout(()=>{popup.style.opacity='1';},500);
-    const closePopup=()=>{popup.style.opacity='0';setTimeout(()=>popup.remove(),600);};
-    document.getElementById('closeAndroid').onclick=closePopup;
-    setTimeout(closePopup,10000);
-  })();
   </script>
 </body>
 </html>
