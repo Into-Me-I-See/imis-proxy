@@ -12,7 +12,7 @@
   html,body{height:100%}
   body{margin:0;background:#000;color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;display:flex;align-items:center;justify-content:center}
   .wrap{max-width:560px;width:100%;padding:24px}
-  .card{background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.08);border-radius:24px;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+  .card{background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.08);border-radius:24px;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,.5);position:relative}
   .logo{display:flex;align-items:center;justify-content:center;margin-bottom:12px}
   .logo img{width:72px;height:72px;border-radius:18px;object-fit:contain}
   h1{margin:16px 0 8px;font-size:28px;letter-spacing:.3px;text-align:center}
@@ -22,16 +22,23 @@
   .btn:active{transform:translateY(1px)}
   .btn-primary{background:linear-gradient(90deg,var(--amber1),var(--amber2));color:#000;box-shadow:0 8px 24px rgba(255,138,0,.35)}
   .btn-ghost{background:#0b0b0b;border:1px solid #333;color:#ffd166}
+  .lang{position:absolute;top:14px;right:14px;display:flex;gap:6px}
+  .lang button{background:#0b0b0b;color:#ffd166;border:1px solid #333;border-radius:9999px;padding:8px 12px;font-weight:700;cursor:pointer}
+  .lang .active{background:linear-gradient(90deg,var(--amber1),var(--amber2));color:#000;border:0}
 </style>
 </head>
 <body>
   <div class="wrap">
     <div class="card">
+      <div class="lang">
+        <button id="lang-en" class="active">EN</button>
+        <button id="lang-fr">FR</button>
+      </div>
       <div class="logo">
         <img src="https://abqfbjpxlxxxqjzdpmij.supabase.co/storage/v1/object/public/app-assets/20250928_181524_0000.png" alt="Into-Me-I-See Logo">
       </div>
-      <h1>Into-Me-I-See</h1>
-      <p>Install the app for a full-screen experience and enable notifications to receive gentle practice reminders.</p>
+      <h1 id="t-title">Into-Me-I-See</h1>
+      <p id="t-sub">Install the app for a full-screen experience and enable notifications to receive gentle practice reminders.</p>
       <div class="actions">
         <button id="pwa-install" class="btn btn-primary">Install the App</button>
         <button id="enable-push" class="btn btn-ghost">Enable notifications</button>
@@ -40,27 +47,90 @@
   </div>
 
   <script>
-    let deferredPrompt=null;
-    const installBtn=document.getElementById('pwa-install');
-    const pushBtn=document.getElementById('enable-push');
+    const strings = {
+      en: {
+        title: "Into-Me-I-See",
+        sub: "Install the app for a full-screen experience and enable notifications to receive gentle practice reminders.",
+        install_android: "Install the App",
+        install_ios: "Add to Home Screen",
+        push: "Enable notifications",
+        push_after_install: "Enable notifications (after Add to Home Screen)",
+        ios_popup_title: "Add Into-Me-I-See to your Home Screen",
+        ios_popup_text: "In Safari, tap Share ⬆️ → Add to Home Screen, then open the app from your Home Screen. After it opens, tap “Enable notifications”.",
+        ios_popup_cta: "Got it 💛",
+        inapp_banner: "Open this page in Safari/Chrome to install and enable notifications.",
+        inapp_copy: "Copy Link",
+        android_tip_title: "Tip: Install Into-Me-I-See",
+        android_tip_text: "Tap “Install the App”, then “Enable notifications” for daily guidance."
+      },
+      fr: {
+        title: "Into-Me-I-See",
+        sub: "Installe l’app pour une expérience plein écran et active les notifications pour recevoir de doux rappels de pratique.",
+        install_android: "Installer l’app",
+        install_ios: "Ajouter à l’écran d’accueil",
+        push: "Activer les notifications",
+        push_after_install: "Activer les notifications (après l’ajout à l’écran d’accueil)",
+        ios_popup_title: "Ajoute Into-Me-I-See à ton écran d’accueil",
+        ios_popup_text: "Dans Safari, touche Partager ⬆️ → Ajouter à l’écran d’accueil, puis ouvre l’app depuis ton écran d’accueil. Ensuite, touche « Activer les notifications ».",
+        ios_popup_cta: "Compris 💛",
+        inapp_banner: "Ouvre cette page dans Safari/Chrome pour installer et activer les notifications.",
+        inapp_copy: "Copier le lien",
+        android_tip_title: "Astuce : Installe Into-Me-I-See",
+        android_tip_text: "Touchez « Installer l’app », puis « Activer les notifications » pour un accompagnement quotidien."
+      }
+    };
+
+    const VAPID_PUBLIC_KEY = 'BG9Ke25lIFppz2UUG_OsqbM7YelVtH2DPpkWRYbkVv2rDMN-3MCVgTUSoOF3dRQ4dJobOEbt_sA36MDbmtLzs4g';
 
     function isIOS(){return /iphone|ipad|ipod/i.test(navigator.userAgent)}
     function isAndroid(){return /android/i.test(navigator.userAgent)}
     function isStandalone(){return matchMedia('(display-mode: standalone)').matches||navigator.standalone}
-
-    window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();deferredPrompt=e;installBtn.textContent='Install the App'});
-
-    if(isStandalone()){
-      installBtn.style.display='none';
-    }else{
-      installBtn.style.display='inline-flex';
-      installBtn.textContent=isIOS()?'Add to Home Screen':'Install the App';
+    function base64UrlToUint8Array(input){
+      const s=input.trim().replace(/\s+/g,'').replace(/-/g,'+').replace(/_/g,'/');
+      const padded=s+'='.repeat((4-(s.length%4))%4);
+      const raw=atob(padded);
+      const out=new Uint8Array(raw.length);
+      for(let i=0;i<raw.length;i++) out[i]=raw.charCodeAt(i);
+      return out;
     }
 
-    function showIOSBottomPopup(){
-      if(document.getElementById('imis-ios-popup')) return;
+    let lang = localStorage.getItem('imis_lang') || 'en';
+    const t = () => strings[lang];
+
+    const titleEl = document.getElementById('t-title');
+    const subEl = document.getElementById('t-sub');
+    const installBtn = document.getElementById('pwa-install');
+    const pushBtn = document.getElementById('enable-push');
+    const langEN = document.getElementById('lang-en');
+    const langFR = document.getElementById('lang-fr');
+
+    function applyLang(){
+      titleEl.textContent = t().title;
+      subEl.textContent = t().sub;
+      installBtn.textContent = isIOS() ? t().install_ios : t().install_android;
+      if(isIOS() && !isStandalone()){
+        pushBtn.textContent = t().push_after_install;
+      } else {
+        pushBtn.textContent = t().push;
+      }
+      if(lang==='en'){ langEN.classList.add('active'); langFR.classList.remove('active'); }
+      else { langFR.classList.add('active'); langEN.classList.remove('active'); }
+      document.documentElement.setAttribute('lang', lang);
+    }
+
+    langEN.onclick = () => { lang='en'; localStorage.setItem('imis_lang', lang); applyLang(); };
+    langFR.onclick = () => { lang='fr'; localStorage.setItem('imis_lang', lang); applyLang(); };
+
+    let deferredPrompt=null;
+    window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; installBtn.textContent = isIOS()? t().install_ios : t().install_android; });
+
+    if(isStandalone()){ installBtn.style.display='none'; } else { installBtn.style.display='inline-flex'; }
+
+    function showPersistentPopup(){
+      const id='imis-ios-popup';
+      if(document.getElementById(id)) return;
       const popup=document.createElement('div');
-      popup.id='imis-ios-popup';
+      popup.id=id;
       popup.style.position='fixed';
       popup.style.left='50%';
       popup.style.bottom='20px';
@@ -79,67 +149,49 @@
       popup.style.zIndex='99';
       popup.style.opacity='0';
       popup.style.transition='opacity .3s ease';
-      popup.innerHTML=
-        '<div style="margin-bottom:8px;font-weight:700;color:#ffb01f;">Add Into-Me-I-See to your Home Screen</div>'+
-        '<div style="line-height:1.5;margin-bottom:10px;">In Safari, tap <b>Share</b> ⬆️ → <b>Add to Home Screen</b>, then open the app from your Home Screen.</div>'+
-        '<button id="imis-ios-close" style="background:linear-gradient(90deg,#ffb01f,#ff8a00);border:0;border-radius:9999px;padding:9px 16px;font-weight:700;color:#000;cursor:pointer;">Got it 💛</button>';
+      popup.innerHTML =
+        '<div style="margin-bottom:8px;font-weight:700;color:#ffb01f;">'+t().ios_popup_title+'</div>'+
+        '<div style="line-height:1.5;margin-bottom:10px;">'+t().ios_popup_text+'</div>'+
+        '<button id="imis-ios-close" style="background:linear-gradient(90deg,#ffb01f,#ff8a00);border:0;border-radius:9999px;padding:9px 16px;font-weight:700;color:#000;cursor:pointer;">'+t().ios_popup_cta+'</button>';
       document.body.appendChild(popup);
       requestAnimationFrame(()=>{popup.style.opacity='1';});
-      document.getElementById('imis-ios-close').onclick=()=>{popup.style.opacity='0';setTimeout(()=>popup.remove(),200);}
+      document.getElementById('imis-ios-close').onclick=()=>{popup.style.opacity='0';setTimeout(()=>popup.remove(),200);};
     }
 
-    installBtn.addEventListener('click',async()=>{
+    installBtn.addEventListener('click', async () => {
       if(deferredPrompt){
         deferredPrompt.prompt();
         await deferredPrompt.userChoice;
         deferredPrompt=null;
-      }else if(isIOS()&&!isStandalone()){
-        showIOSBottomPopup();
-      }else{
+      } else if(isIOS() && !isStandalone()){
+        showPersistentPopup();
+      } else {
         alert('Install not available on this browser.');
       }
     });
 
-    const VAPID_PUBLIC_KEY='BG9Ke25lIFppz2UUG_OsqbM7YelVtH2DPpkWRYbkVv2rDMN-3MCVgTUSoOF3dRQ4dJobOEbt_sA36MDbmtLzs4g';
-
-    function base64UrlToUint8Array(input){
-      const s=input.trim().replace(/\s+/g,'').replace(/-/g,'+').replace(/_/g,'/');
-      const padded=s+'='.repeat((4-(s.length%4))%4);
-      const raw=atob(padded);
-      const out=new Uint8Array(raw.length);
-      for(let i=0;i<raw.length;i++) out[i]=raw.charCodeAt(i);
-      return out;
-    }
-
     async function enablePush(){
-      if(isIOS()&&!isStandalone()){showIOSBottomPopup();return}
-      if(!('Notification'in window)||!('serviceWorker'in navigator)||!('PushManager'in window)){alert('Notifications not supported on this device/browser.');return}
+      if(isIOS() && !isStandalone()){
+        showPersistentPopup();
+        return;
+      }
+      if(!('Notification'in window)||!('serviceWorker'in navigator)||!('PushManager'in window)){
+        alert('Notifications not supported on this device/browser.');
+        return;
+      }
       const perm=await Notification.requestPermission();
-      if(perm!=='granted'){alert('Notifications were blocked.');return}
+      if(perm!=='granted'){ alert('Notifications were blocked.'); return; }
       const reg=await navigator.serviceWorker.ready;
       const appServerKey=base64UrlToUint8Array(VAPID_PUBLIC_KEY);
-      if(appServerKey.length!==65){alert('VAPID key format issue.');return}
-      const sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:appServerKey});
-      await fetch('/api/saveSubscription',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(sub)});
-      alert('Notifications enabled ✅');
+      if(appServerKey.length!==65){ alert('VAPID key format issue.'); return; }
+      const sub=await reg.pushManager.subscribe({ userVisibleOnly:true, applicationServerKey:appServerKey });
+      await fetch('/api/saveSubscription',{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(sub) });
+      alert(lang==='fr' ? 'Notifications activées ✅' : 'Notifications enabled ✅');
     }
+    pushBtn.addEventListener('click', enablePush);
 
-    pushBtn.addEventListener('click',enablePush);
+    if('serviceWorker' in navigator){ window.addEventListener('load', () => { navigator.serviceWorker.register('/sw.js', { scope:'/' }).catch(()=>{}); }); }
 
-    if('serviceWorker'in navigator){
-      window.addEventListener('load',()=>{navigator.serviceWorker.register('/sw.js',{scope:'/'}).catch(()=>{})});
-    }
-
-    const canPush=('Notification'in window)&&('serviceWorker'in navigator)&&('PushManager'in window);
-    if(!canPush && !isIOS()){
-      pushBtn.style.display='none';
-    }
-    if(isIOS()&&!isStandalone()){
-      pushBtn.textContent='Enable notifications (after Add to Home Screen)';
-    }
-  </script>
-
-  <script>
     function isInAppBrowser(){
       const ua=navigator.userAgent.toLowerCase();
       return ua.includes('fbav')||ua.includes('fban')||ua.includes('instagram')||ua.includes('line/')||ua.includes('twitter');
@@ -158,17 +210,15 @@
       div.style.fontWeight='600';
       div.style.zIndex='60';
       div.style.backdropFilter='blur(6px)';
-      div.innerHTML='Open this page in Safari/Chrome to install and enable notifications. <button id="copylink" style="margin-left:10px;border:1px solid #444;border-radius:999px;background:#0b0b0b;color:#ffd166;font-weight:700;padding:8px 12px;cursor:pointer">Copy Link</button>';
+      div.innerHTML = t().inapp_banner + ' <button id="copylink" style="margin-left:10px;border:1px solid #444;border-radius:999px;background:#0b0b0b;color:#ffd166;font-weight:700;padding:8px 12px;cursor:pointer">'+t().inapp_copy+'</button>';
       document.body.appendChild(div);
       const btn=document.getElementById('copylink');
-      if(btn){btn.onclick=async()=>{await navigator.clipboard.writeText(location.href);div.innerHTML='Link copied. Open Safari/Chrome and paste to continue.';};}
+      if(btn){ btn.onclick = async () => { await navigator.clipboard.writeText(location.href); div.innerHTML = (lang==='fr'?'Lien copié. Ouvre Safari/Chrome et colle pour continuer.':'Link copied. Open Safari/Chrome and paste to continue.'); }; }
     }
     if(isInAppBrowser()) suggestOpenExternally();
 
-    if(/iphone|ipad|ipod/i.test(navigator.userAgent) && !(matchMedia('(display-mode: standalone)').matches||navigator.standalone)){
-      const p=document.getElementById('enable-push');
-      if(p){p.disabled=true;p.textContent='Enable notifications (after Add to Home Screen)';}
-    }
+    if(isIOS() && !isStandalone()){ pushBtn.textContent = t().push_after_install; }
+    applyLang();
   </script>
 </body>
 </html>
