@@ -37,8 +37,8 @@
       <h1>Into-Me-I-See</h1>
       <p>Install the app for a full-screen experience and enable notifications to receive gentle practice reminders.</p>
       <div class="actions">
-        <button id="pwa-install" class="btn btn-primary" style="display:none">Install the App</button>
-        <button id="enable-push" class="btn btn-ghost" style="display:none">Enable notifications</button>
+        <button id="pwa-install" class="btn btn-primary">Install the App</button>
+        <button id="enable-push" class="btn btn-ghost">Enable notifications</button>
       </div>
     </div>
   </div>
@@ -62,10 +62,67 @@
     const pushBtn=document.getElementById('enable-push');
     const iosModal=document.getElementById('ios-a2hs');
     const iosClose=document.getElementById('ios-a2hs-close');
+
     function isIOS(){return /iphone|ipad|ipod/i.test(navigator.userAgent)}
     function isStandalone(){return matchMedia('(display-mode: standalone)').matches||navigator.standalone}
 
-    window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();deferredPrompt=e;installBtn.style.display='inline-flex'});
-    if(isStandalone()) installBtn.style.display='none';
+    window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();deferredPrompt=e;installBtn.textContent='Install the App'});
 
-    installBtn.addEventListener('click',async()=>{if(deferredPrompt){deferredPrompt.prompt();await deferredPrompt.userChoice;deferredPrompt=null}else if(isIOS()&&!isStandalone()){iosModal.style.display='block'}else{alert('Inst
+    if(isStandalone()){
+      installBtn.style.display='none';
+    }else{
+      installBtn.style.display='inline-flex';
+      installBtn.textContent=isIOS()?'Add to Home Screen':'Install the App';
+    }
+
+    installBtn.addEventListener('click',async()=>{
+      if(deferredPrompt){
+        deferredPrompt.prompt();
+        await deferredPrompt.userChoice;
+        deferredPrompt=null;
+      }else if(isIOS()&&!isStandalone()){
+        iosModal.style.display='block';
+      }else{
+        alert('Install not available on this browser.');
+      }
+    });
+
+    iosClose.addEventListener('click',()=>iosModal.style.display='none');
+
+    const VAPID_PUBLIC_KEY='B2KixEyWPAKic1sl1p9xH4eHtohQskYW0OH9jKjoE9PHP_SF_vZtvVRbpEj3_lNyjDu0GQAFu4Qb84NB0uig';
+
+    function b64ToUint8Array(s){
+      const p='='.repeat((4-s.length%4)%4);
+      const b=(s+p).replace(/-/g,'+').replace(/_/g,'/');
+      const r=atob(b);const a=new Uint8Array(r.length);
+      for(let i=0;i<r.length;i++)a[i]=r.charCodeAt(i);
+      return a;
+    }
+
+    async function enablePush(){
+      if(isIOS()&&!isStandalone()){iosModal.style.display='block';return}
+      if(!('Notification'in window)||!('serviceWorker'in navigator)||!('PushManager'in window)){alert('Notifications not supported on this device/browser.');return}
+      const perm=await Notification.requestPermission();
+      if(perm!=='granted'){alert('Notifications were blocked.');return}
+      const reg=await navigator.serviceWorker.ready;
+      const sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64ToUint8Array(VAPID_PUBLIC_KEY)});
+      await fetch('/api/saveSubscription',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(sub)});
+      alert('Notifications enabled ✅');
+    }
+
+    pushBtn.addEventListener('click',enablePush);
+
+    if('serviceWorker'in navigator){
+      window.addEventListener('load',()=>{navigator.serviceWorker.register('/sw.js',{scope:'/'}).catch(()=>{})});
+    }
+
+    const canPush=('Notification'in window)&&('serviceWorker'in navigator)&&('PushManager'in window);
+    if(!canPush && !isIOS()){
+      pushBtn.style.display='none';
+    }
+    if(isIOS()&&!isStandalone()){
+      pushBtn.textContent='Enable notifications (after install)';
+    }
+  </script>
+</body>
+</html>
