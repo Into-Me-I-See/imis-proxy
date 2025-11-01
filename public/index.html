@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Into-Me-I-See</title>
+<title>Into-Me-I-See — Install</title>
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#000000">
 <link rel="icon" type="image/png" href="https://abqfbjpxlxxxqjzdpmij.supabase.co/storage/v1/object/public/app-assets/20250928_181524_0000.png">
@@ -40,7 +40,7 @@
       <h1 id="t-title">Into-Me-I-See</h1>
       <p id="t-sub">Install the app for a full-screen experience and enable notifications to receive gentle practice reminders.</p>
       <div class="actions">
-        <button id="open-app" class="btn btn-primary">Open the App</button>
+        <a id="open-app" class="btn btn-primary" href="/app">Open the App</a>
         <button id="pwa-install" class="btn btn-primary">Install the App</button>
         <button id="enable-push" class="btn btn-ghost">Enable notifications</button>
       </div>
@@ -48,8 +48,6 @@
   </div>
 
   <script>
-    const APP_URL = '/app';
-
     const strings = {
       en: {
         title: "Into-Me-I-See",
@@ -84,13 +82,11 @@
     const VAPID_PUBLIC_KEY = 'BG9Ke25lIFppz2UUG_OsqbM7YelVtH2DPpkWRYbkVv2rDMN-3MCVgTUSoOF3dRQ4dJobOEbt_sA36MDbmtLzs4g';
 
     function isIOS(){return /iphone|ipad|ipod/i.test(navigator.userAgent)}
-    function isAndroid(){return /android/i.test(navigator.userAgent)}
     function isStandalone(){return matchMedia('(display-mode: standalone)').matches||navigator.standalone}
     function base64UrlToUint8Array(input){
       const s=input.trim().replace(/\s+/g,'').replace(/-/g,'+').replace(/_/g,'/');
       const padded=s+'='.repeat((4-(s.length%4))%4);
-      const raw=atob(padded);
-      const out=new Uint8Array(raw.length);
+      const raw=atob(padded); const out=new Uint8Array(raw.length);
       for(let i=0;i<raw.length;i++) out[i]=raw.charCodeAt(i);
       return out;
     }
@@ -98,66 +94,44 @@
     let lang = localStorage.getItem('imis_lang') || 'en';
     const t = () => strings[lang];
 
-    const titleEl = document.getElementById('t-title');
-    const subEl = document.getElementById('t-sub');
-    const openBtn = document.getElementById('open-app');
-    const installBtn = document.getElementById('pwa-install');
-    const pushBtn = document.getElementById('enable-push');
-    const langEN = document.getElementById('lang-en');
-    const langFR = document.getElementById('lang-fr');
+    const titleEl=document.getElementById('t-title');
+    const subEl=document.getElementById('t-sub');
+    const openApp=document.getElementById('open-app');
+    const installBtn=document.getElementById('pwa-install');
+    const pushBtn=document.getElementById('enable-push');
+    const langEN=document.getElementById('lang-en');
+    const langFR=document.getElementById('lang-fr');
 
     function applyLang(){
-      titleEl.textContent = t().title;
-      subEl.textContent = t().sub;
-      openBtn.textContent = t().open_app;
-      installBtn.textContent = isIOS() ? t().install_ios : t().install_android;
-      if(isIOS() && !isStandalone()){ pushBtn.textContent = t().push_after_install; } else { pushBtn.textContent = t().push; }
-      if(lang==='en'){ langEN.classList.add('active'); langFR.classList.remove('active'); }
-      else { langFR.classList.add('active'); langEN.classList.remove('active'); }
-      document.documentElement.setAttribute('lang', lang);
+      titleEl.textContent=t().title;
+      subEl.textContent=t().sub;
+      openApp.textContent=t().open_app;
+      installBtn.textContent=isIOS()?t().install_ios:t().install_android;
+      pushBtn.textContent=(isIOS()&&!isStandalone())?t().push_after_install:t().push;
+      if(lang==='en'){langEN.classList.add('active');langFR.classList.remove('active');}
+      else{langFR.classList.add('active');langEN.classList.remove('active');}
+      document.documentElement.setAttribute('lang',lang);
     }
-    langEN.onclick = () => { lang='en'; localStorage.setItem('imis_lang', lang); applyLang(); };
-    langFR.onclick = () => { lang='fr'; localStorage.setItem('imis_lang', lang); applyLang(); };
-
-    if (isStandalone()) { location.replace(APP_URL); }
-    if (localStorage.getItem('imis_installed') === '1') { location.replace(APP_URL); }
-
-    window.addEventListener('appinstalled', () => {
-      localStorage.setItem('imis_installed','1');
-      location.replace(APP_URL);
-    });
-
-    openBtn.addEventListener('click', () => { location.href = APP_URL; });
+    langEN.onclick=()=>{lang='en';localStorage.setItem('imis_lang',lang);applyLang();};
+    langFR.onclick=()=>{lang='fr';localStorage.setItem('imis_lang',lang);applyLang();};
 
     let deferredPrompt=null;
-    window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; installBtn.textContent = isIOS()? strings[lang].install_ios : strings[lang].install_android; });
+    window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();deferredPrompt=e;});
 
-    if(isStandalone()){ installBtn.style.display='none'; } else { installBtn.style.display='inline-flex'; }
-
-    function showPersistentPopup(){
+    function showIOSPopup(){
       const id='imis-ios-popup';
       if(document.getElementById(id)) return;
       const popup=document.createElement('div');
       popup.id=id;
-      popup.style.position='fixed';
-      popup.style.left='50%';
-      popup.style.bottom='20px';
-      popup.style.transform='translateX(-50%)';
-      popup.style.background='rgba(0,0,0,0.9)';
-      popup.style.border='1px solid rgba(255,176,31,0.5)';
-      popup.style.borderRadius='16px';
-      popup.style.padding='18px 22px';
-      popup.style.width='90%';
-      popup.style.maxWidth='360px';
-      popup.style.color='#fff';
-      popup.style.fontSize='15px';
-      popup.style.fontWeight='500';
-      popup.style.textAlign='center';
-      popup.style.boxShadow='0 8px 24px rgba(0,0,0,.6)';
-      popup.style.zIndex='99';
-      popup.style.opacity='0';
-      popup.style.transition='opacity .3s ease';
-      popup.innerHTML =
+      Object.assign(popup.style,{
+        position:'fixed',left:'50%',bottom:'20px',transform:'translateX(-50%)',
+        background:'rgba(0,0,0,0.9)',border:'1px solid rgba(255,176,31,0.5)',
+        borderRadius:'16px',padding:'18px 22px',width:'90%',maxWidth:'360px',
+        color:'#fff',fontSize:'15px',fontWeight:'500',textAlign:'center',
+        boxShadow:'0 8px 24px rgba(0,0,0,.6)',zIndex:'99',opacity:'0',
+        transition:'opacity .3s ease'
+      });
+      popup.innerHTML=
         '<div style="margin-bottom:8px;font-weight:700;color:#ffb01f;">'+t().ios_popup_title+'</div>'+
         '<div style="line-height:1.5;margin-bottom:10px;">'+t().ios_popup_text+'</div>'+
         '<button id="imis-ios-close" style="background:linear-gradient(90deg,#ffb01f,#ff8a00);border:0;border-radius:9999px;padding:9px 16px;font-weight:700;color:#000;cursor:pointer;">'+t().ios_popup_cta+'</button>';
@@ -166,68 +140,43 @@
       document.getElementById('imis-ios-close').onclick=()=>{popup.style.opacity='0';setTimeout(()=>popup.remove(),200);};
     }
 
-    installBtn.addEventListener('click', async () => {
+    installBtn.onclick=async()=>{
       if(deferredPrompt){
         deferredPrompt.prompt();
-        const choice = await deferredPrompt.userChoice;
-        if (choice && choice.outcome === 'accepted') {
-          localStorage.setItem('imis_installed','1');
-        }
+        const choice=await deferredPrompt.userChoice;
+        if(choice&&choice.outcome==='accepted'){localStorage.setItem('imis_installed','1');}
         deferredPrompt=null;
-      } else if(isIOS() && !isStandalone()){
-        showPersistentPopup();
-      } else {
+      }else if(isIOS()&&!isStandalone()){
+        showIOSPopup();
+      }else{
         alert('Install not available on this browser.');
       }
-    });
+    };
 
-    async function enablePush(){
-      if(isIOS() && !isStandalone()){
-        showPersistentPopup();
-        return;
-      }
-      if(!('Notification'in window)||!('serviceWorker'in navigator)||!('PushManager'in window)){
-        alert('Notifications not supported on this device/browser.');
-        return;
-      }
-      const perm=await Notification.requestPermission();
-      if(perm!=='granted'){ alert('Notifications were blocked.'); return; }
+    pushBtn.onclick=async()=>{
+      if(isIOS()&&!isStandalone()){showIOSPopup();return;}
+      if(!('Notification'in window)||!('serviceWorker'in navigator)||!('PushManager'in window)){alert('Notifications not supported on this device/browser.');return;}
+      const perm=await Notification.requestPermission(); if(perm!=='granted'){alert(lang==='fr'?'Notifications bloquées.':'Notifications were blocked.');return;}
       const reg=await navigator.serviceWorker.ready;
-      const appServerKey=base64UrlToUint8Array(VAPID_PUBLIC_KEY);
-      if(appServerKey.length!==65){ alert('VAPID key format issue.'); return; }
-      const sub=await reg.pushManager.subscribe({ userVisibleOnly:true, applicationServerKey:appServerKey });
-      await fetch('/api/saveSubscription',{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(sub) });
-      alert(lang==='fr' ? 'Notifications activées ✅' : 'Notifications enabled ✅');
-    }
-    pushBtn.addEventListener('click', enablePush);
+      const k=base64UrlToUint8Array(VAPID_PUBLIC_KEY); if(k.length!==65){alert('VAPID key format issue.');return;}
+      const sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:k});
+      await fetch('/api/saveSubscription',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(sub)});
+      alert(lang==='fr'?'Notifications activées ✅':'Notifications enabled ✅');
+    };
 
-    if('serviceWorker' in navigator){ window.addEventListener('load', () => { navigator.serviceWorker.register('/sw.js', { scope:'/' }).catch(()=>{}); }); }
-
-    function isInAppBrowser(){
-      const ua=navigator.userAgent.toLowerCase();
-      return ua.includes('fbav')||ua.includes('fban')||ua.includes('instagram')||ua.includes('line/')||ua.includes('twitter');
-    }
-    function suggestOpenExternally(){
+    // In-app browser banner
+    function isInApp(){const ua=navigator.userAgent.toLowerCase();return ua.includes('fbav')||ua.includes('fban')||ua.includes('instagram')||ua.includes('line/')||ua.includes('twitter');}
+    function banner(){
       const div=document.createElement('div');
-      div.style.position='fixed';
-      div.style.left='50%';
-      div.style.bottom='20px';
-      div.style.transform='translateX(-50%)';
-      div.style.background='rgba(0,0,0,.85)';
-      div.style.border='1px solid #333';
-      div.style.borderRadius='14px';
-      div.style.padding='12px 16px';
-      div.style.color='#fff';
-      div.style.fontWeight='600';
-      div.style.zIndex='60';
-      div.style.backdropFilter='blur(6px)';
-      div.innerHTML = strings[lang].inapp_banner + ' <button id="copylink" style="margin-left:10px;border:1px solid #444;border-radius:999px;background:#0b0b0b;color:#ffd166;font-weight:700;padding:8px 12px;cursor:pointer">'+strings[lang].inapp_copy+'</button>';
+      Object.assign(div.style,{position:'fixed',left:'50%',bottom:'20px',transform:'translateX(-50%)',background:'rgba(0,0,0,.85)',border:'1px solid #333',borderRadius:'14px',padding:'12px 16px',color:'#fff',fontWeight:'600',zIndex:'60',backdropFilter:'blur(6px)'});
+      div.innerHTML=t().inapp_banner+' <button id="copylink" style="margin-left:10px;border:1px solid #444;border-radius:999px;background:#0b0b0b;color:#ffd166;font-weight:700;padding:8px 12px;cursor:pointer">'+t().inapp_copy+'</button>';
       document.body.appendChild(div);
       const btn=document.getElementById('copylink');
-      if(btn){ btn.onclick = async () => { await navigator.clipboard.writeText(location.href); div.innerHTML = (lang==='fr'?'Lien copié. Ouvre Safari/Chrome et colle pour continuer.':'Link copied. Open Safari/Chrome and paste to continue.'); }; }
+      if(btn){btn.onclick=async()=>{await navigator.clipboard.writeText(location.href);div.innerHTML=(lang==='fr'?'Lien copié. Ouvre Safari/Chrome et colle pour continuer.':'Link copied. Open Safari/Chrome and paste to continue.');};}
     }
-    if(isInAppBrowser()) suggestOpenExternally();
+    if(isInApp()) banner();
 
+    if('serviceWorker'in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('/sw.js',{scope:'/'}).catch(()=>{});});}
     applyLang();
   </script>
 </body>
