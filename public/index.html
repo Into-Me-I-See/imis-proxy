@@ -8,176 +8,62 @@
 <meta name="theme-color" content="#000000">
 <link rel="icon" type="image/png" href="https://abqfbjpxlxxxqjzdpmij.supabase.co/storage/v1/object/public/app-assets/20250928_181524_0000.png">
 <style>
-  :root{--amber1:#ffb01f;--amber2:#ff8a00;--bg:#000;--card:#0b0b0b;--text:#fff}
-  html,body{height:100%}
-  body{margin:0;background:#000;color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;display:flex;align-items:center;justify-content:center}
-  .wrap{max-width:560px;width:100%;padding:24px}
-  .card{background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.08);border-radius:24px;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,.5);position:relative}
-  .logo{display:flex;align-items:center;justify-content:center;margin-bottom:12px}
-  .logo img{width:72px;height:72px;border-radius:18px;object-fit:contain}
-  h1{margin:16px 0 8px;font-size:28px;letter-spacing:.3px;text-align:center}
-  p{margin:0 0 18px;opacity:.85;line-height:1.5;text-align:center}
-  .actions{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
-  .btn{appearance:none;border:0;border-radius:9999px;padding:14px 22px;font-weight:700;cursor:pointer;transition:transform .06s ease,opacity .2s}
-  .btn:active{transform:translateY(1px)}
-  .btn-primary{background:linear-gradient(90deg,var(--amber1),var(--amber2));color:#000;box-shadow:0 8px 24px rgba(255,138,0,.35)}
-  .btn-ghost{background:#0b0b0b;border:1px solid #333;color:#ffd166}
-  .lang{position:absolute;top:14px;right:14px;display:flex;gap:6px}
-  .lang button{background:#0b0b0b;color:#ffd166;border:1px solid #333;border-radius:9999px;padding:8px 12px;font-weight:700;cursor:pointer}
-  .lang .active{background:linear-gradient(90deg,var(--amber1),var(--amber2));color:#000;border:0}
+:root{--amber1:#ffb01f;--amber2:#ff8a00;--bg:#000;--card:#0b0b0b;--text:#fff}
+html,body{height:100%}
+body{margin:0;background:#000;color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;display:flex;align-items:center;justify-content:center}
+.wrap{max-width:560px;width:100%;padding:24px}
+.card{background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.08);border-radius:24px;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,.5);position:relative}
+.logo{display:flex;align-items:center;justify-content:center;margin-bottom:12px}
+.logo img{width:72px;height:72px;border-radius:18px;object-fit:contain}
+h1{margin:16px 0 8px;font-size:28px;letter-spacing:.3px;text-align:center}
+p{margin:0 0 18px;opacity:.85;line-height:1.5;text-align:center}
+.actions{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.btn{appearance:none;border:0;border-radius:9999px;padding:14px 22px;font-weight:700;cursor:pointer;transition:transform .06s ease,opacity .2s}
+.btn:active{transform:translateY(1px)}
+.btn-primary{background:linear-gradient(90deg,var(--amber1),var(--amber2));color:#000;box-shadow:0 8px 24px rgba(255,138,0,.35)}
+.btn-ghost{background:#0b0b0b;border:1px solid #333;color:#ffd166}
+.lang{position:absolute;top:14px;right:14px;display:flex;gap:6px}
+.lang button{background:#0b0b0b;color:#ffd166;border:1px solid #333;border-radius:9999px;padding:8px 12px;font-weight:700;cursor:pointer}
+.lang .active{background:linear-gradient(90deg,var(--amber1),var(--amber2));color:#000;border:0}
 </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="card">
-      <div class="lang">
-        <button id="lang-en" class="active">EN</button>
-        <button id="lang-fr">FR</button>
-      </div>
-      <div class="logo">
-        <img src="https://abqfbjpxlxxxqjzdpmij.supabase.co/storage/v1/object/public/app-assets/20250928_181524_0000.png" alt="Into-Me-I-See Logo">
-      </div>
-      <h1 id="t-title">Into-Me-I-See</h1>
-      <p id="t-sub">Install the app for a full-screen experience and enable notifications to receive gentle practice reminders.</p>
-      <div class="actions">
-        <a id="open-app" class="btn btn-primary" href="/app">Open the App</a>
-        <button id="pwa-install" class="btn btn-primary">Install the App</button>
-        <button id="enable-push" class="btn btn-ghost">Enable notifications</button>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    const strings = {
-      en: {
-        title: "Into-Me-I-See",
-        sub: "Install the app for a full-screen experience and enable notifications to receive gentle practice reminders.",
-        open_app: "Open the App",
-        install_android: "Install the App",
-        install_ios: "Add to Home Screen",
-        push: "Enable notifications",
-        push_after_install: "Enable notifications (after Add to Home Screen)",
-        ios_popup_title: "Add Into-Me-I-See to your Home Screen",
-        ios_popup_text: "In Safari, tap Share ⬆️ → Add to Home Screen, then open the app from your Home Screen. After it opens, tap “Enable notifications”.",
-        ios_popup_cta: "Got it 💛",
-        inapp_banner: "Open this page in Safari/Chrome to install and enable notifications.",
-        inapp_copy: "Copy Link"
-      },
-      fr: {
-        title: "Into-Me-I-See",
-        sub: "Installe l’app pour une expérience plein écran et active les notifications pour recevoir de doux rappels de pratique.",
-        open_app: "Ouvrir l’app",
-        install_android: "Installer l’app",
-        install_ios: "Ajouter à l’écran d’accueil",
-        push: "Activer les notifications",
-        push_after_install: "Activer les notifications (après l’ajout à l’écran d’accueil)",
-        ios_popup_title: "Ajoute Into-Me-I-See à ton écran d’accueil",
-        ios_popup_text: "Dans Safari, touche Partager ⬆️ → Ajouter à l’écran d’accueil, puis ouvre l’app depuis ton écran d’accueil. Ensuite, touche « Activer les notifications ».",
-        ios_popup_cta: "Compris 💛",
-        inapp_banner: "Ouvre cette page dans Safari/Chrome pour installer et activer les notifications.",
-        inapp_copy: "Copier le lien"
-      }
-    };
-
-    const VAPID_PUBLIC_KEY = 'BG9Ke25lIFppz2UUG_OsqbM7YelVtH2DPpkWRYbkVv2rDMN-3MCVgTUSoOF3dRQ4dJobOEbt_sA36MDbmtLzs4g';
-
-    function isIOS(){return /iphone|ipad|ipod/i.test(navigator.userAgent)}
-    function isStandalone(){return matchMedia('(display-mode: standalone)').matches||navigator.standalone}
-    function base64UrlToUint8Array(input){
-      const s=input.trim().replace(/\s+/g,'').replace(/-/g,'+').replace(/_/g,'/');
-      const padded=s+'='.repeat((4-(s.length%4))%4);
-      const raw=atob(padded); const out=new Uint8Array(raw.length);
-      for(let i=0;i<raw.length;i++) out[i]=raw.charCodeAt(i);
-      return out;
-    }
-
-    let lang = localStorage.getItem('imis_lang') || 'en';
-    const t = () => strings[lang];
-
-    const titleEl=document.getElementById('t-title');
-    const subEl=document.getElementById('t-sub');
-    const openApp=document.getElementById('open-app');
-    const installBtn=document.getElementById('pwa-install');
-    const pushBtn=document.getElementById('enable-push');
-    const langEN=document.getElementById('lang-en');
-    const langFR=document.getElementById('lang-fr');
-
-    function applyLang(){
-      titleEl.textContent=t().title;
-      subEl.textContent=t().sub;
-      openApp.textContent=t().open_app;
-      installBtn.textContent=isIOS()?t().install_ios:t().install_android;
-      pushBtn.textContent=(isIOS()&&!isStandalone())?t().push_after_install:t().push;
-      if(lang==='en'){langEN.classList.add('active');langFR.classList.remove('active');}
-      else{langFR.classList.add('active');langEN.classList.remove('active');}
-      document.documentElement.setAttribute('lang',lang);
-    }
-    langEN.onclick=()=>{lang='en';localStorage.setItem('imis_lang',lang);applyLang();};
-    langFR.onclick=()=>{lang='fr';localStorage.setItem('imis_lang',lang);applyLang();};
-
-    let deferredPrompt=null;
-    window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();deferredPrompt=e;});
-
-    function showIOSPopup(){
-      const id='imis-ios-popup';
-      if(document.getElementById(id)) return;
-      const popup=document.createElement('div');
-      popup.id=id;
-      Object.assign(popup.style,{
-        position:'fixed',left:'50%',bottom:'20px',transform:'translateX(-50%)',
-        background:'rgba(0,0,0,0.9)',border:'1px solid rgba(255,176,31,0.5)',
-        borderRadius:'16px',padding:'18px 22px',width:'90%',maxWidth:'360px',
-        color:'#fff',fontSize:'15px',fontWeight:'500',textAlign:'center',
-        boxShadow:'0 8px 24px rgba(0,0,0,.6)',zIndex:'99',opacity:'0',
-        transition:'opacity .3s ease'
-      });
-      popup.innerHTML=
-        '<div style="margin-bottom:8px;font-weight:700;color:#ffb01f;">'+t().ios_popup_title+'</div>'+
-        '<div style="line-height:1.5;margin-bottom:10px;">'+t().ios_popup_text+'</div>'+
-        '<button id="imis-ios-close" style="background:linear-gradient(90deg,#ffb01f,#ff8a00);border:0;border-radius:9999px;padding:9px 16px;font-weight:700;color:#000;cursor:pointer;">'+t().ios_popup_cta+'</button>';
-      document.body.appendChild(popup);
-      requestAnimationFrame(()=>{popup.style.opacity='1';});
-      document.getElementById('imis-ios-close').onclick=()=>{popup.style.opacity='0';setTimeout(()=>popup.remove(),200);};
-    }
-
-    installBtn.onclick=async()=>{
-      if(deferredPrompt){
-        deferredPrompt.prompt();
-        const choice=await deferredPrompt.userChoice;
-        if(choice&&choice.outcome==='accepted'){localStorage.setItem('imis_installed','1');}
-        deferredPrompt=null;
-      }else if(isIOS()&&!isStandalone()){
-        showIOSPopup();
-      }else{
-        alert('Install not available on this browser.');
-      }
-    };
-
-    pushBtn.onclick=async()=>{
-      if(isIOS()&&!isStandalone()){showIOSPopup();return;}
-      if(!('Notification'in window)||!('serviceWorker'in navigator)||!('PushManager'in window)){alert('Notifications not supported on this device/browser.');return;}
-      const perm=await Notification.requestPermission(); if(perm!=='granted'){alert(lang==='fr'?'Notifications bloquées.':'Notifications were blocked.');return;}
-      const reg=await navigator.serviceWorker.ready;
-      const k=base64UrlToUint8Array(VAPID_PUBLIC_KEY); if(k.length!==65){alert('VAPID key format issue.');return;}
-      const sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:k});
-      await fetch('/api/saveSubscription',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(sub)});
-      alert(lang==='fr'?'Notifications activées ✅':'Notifications enabled ✅');
-    };
-
-    // In-app browser banner
-    function isInApp(){const ua=navigator.userAgent.toLowerCase();return ua.includes('fbav')||ua.includes('fban')||ua.includes('instagram')||ua.includes('line/')||ua.includes('twitter');}
-    function banner(){
-      const div=document.createElement('div');
-      Object.assign(div.style,{position:'fixed',left:'50%',bottom:'20px',transform:'translateX(-50%)',background:'rgba(0,0,0,.85)',border:'1px solid #333',borderRadius:'14px',padding:'12px 16px',color:'#fff',fontWeight:'600',zIndex:'60',backdropFilter:'blur(6px)'});
-      div.innerHTML=t().inapp_banner+' <button id="copylink" style="margin-left:10px;border:1px solid #444;border-radius:999px;background:#0b0b0b;color:#ffd166;font-weight:700;padding:8px 12px;cursor:pointer">'+t().inapp_copy+'</button>';
-      document.body.appendChild(div);
-      const btn=document.getElementById('copylink');
-      if(btn){btn.onclick=async()=>{await navigator.clipboard.writeText(location.href);div.innerHTML=(lang==='fr'?'Lien copié. Ouvre Safari/Chrome et colle pour continuer.':'Link copied. Open Safari/Chrome and paste to continue.');};}
-    }
-    if(isInApp()) banner();
-
-    if('serviceWorker'in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('/sw.js',{scope:'/'}).catch(()=>{});});}
-    applyLang();
-  </script>
+<div class="wrap">
+<div class="card">
+<div class="lang">
+<button id="lang-en" class="active">EN</button>
+<button id="lang-fr">FR</button>
+</div>
+<div class="logo">
+<img src="https://abqfbjpxlxxxqjzdpmij.supabase.co/storage/v1/object/public/app-assets/20250928_181524_0000.png" alt="Into-Me-I-See Logo">
+</div>
+<h1 id="t-title">Into-Me-I-See</h1>
+<p id="t-sub">Install the app for a full-screen experience and enable notifications to receive gentle practice reminders.</p>
+<div class="actions">
+<a id="open-app" class="btn btn-primary" href="/app">Open the App</a>
+<button id="pwa-install" class="btn btn-primary">Install the App</button>
+<button id="enable-push" class="btn btn-ghost">Enable notifications</button>
+</div>
+</div>
+</div>
+<script>
+const strings={en:{title:"Into-Me-I-See",sub:"Install the app for a full-screen experience and enable notifications to receive gentle practice reminders.",open_app:"Open the App",install_android:"Install the App",install_ios:"Add to Home Screen",push:"Enable notifications",push_after_install:"Enable notifications (after Add to Home Screen)",ios_popup_title:"Add Into-Me-I-See to your Home Screen",ios_popup_text:"In Safari, tap Share ⬆️ → Add to Home Screen, then open the app from your Home Screen. After it opens, tap “Enable notifications”.",ios_popup_cta:"Got it 💛",inapp_banner:"Open this page in Safari/Chrome to install and enable notifications.",inapp_copy:"Copy Link"},fr:{title:"Into-Me-I-See",sub:"Installe l’app pour une expérience plein écran et active les notifications pour recevoir de doux rappels de pratique.",open_app:"Ouvrir l’app",install_android:"Installer l’app",install_ios:"Ajouter à l’écran d’accueil",push:"Activer les notifications",push_after_install:"Activer les notifications (après l’ajout à l’écran d’accueil)",ios_popup_title:"Ajoute Into-Me-I-See à ton écran d’accueil",ios_popup_text:"Dans Safari, touche Partager ⬆️ → Ajouter à l’écran d’accueil, puis ouvre l’app depuis ton écran d’accueil. Ensuite, touche « Activer les notifications ».",ios_popup_cta:"Compris 💛",inapp_banner:"Ouvre cette page dans Safari/Chrome pour installer et activer les notifications.",inapp_copy:"Copier le lien"}};
+const VAPID_PUBLIC_KEY='BG9Ke25lIFppz2UUG_OsqbM7YelVtH2DPpkWRYbkVv2rDMN-3MCVgTUSoOF3dRQ4dJobOEbt_sA36MDbmtLzs4g';
+function isIOS(){return/iphone|ipad|ipod/i.test(navigator.userAgent)}
+function isStandalone(){return matchMedia('(display-mode: standalone)').matches||navigator.standalone}
+function base64UrlToUint8Array(i){const s=i.trim().replace(/\s+/g,'').replace(/-/g,'+').replace(/_/g,'/');const p=s+'='.repeat((4-(s.length%4))%4);const r=atob(p);const o=new Uint8Array(r.length);for(let j=0;j<r.length;j++)o[j]=r.charCodeAt(j);return o}
+let lang=localStorage.getItem('imis_lang')||'en';const t=()=>strings[lang];
+const titleEl=document.getElementById('t-title');const subEl=document.getElementById('t-sub');const openApp=document.getElementById('open-app');const installBtn=document.getElementById('pwa-install');const pushBtn=document.getElementById('enable-push');const langEN=document.getElementById('lang-en');const langFR=document.getElementById('lang-fr');
+function applyLang(){titleEl.textContent=t().title;subEl.textContent=t().sub;openApp.textContent=t().open_app;installBtn.textContent=isIOS()?t().install_ios:t().install_android;pushBtn.textContent=(isIOS()&&!isStandalone())?t().push_after_install:t().push;if(lang==='en'){langEN.classList.add('active');langFR.classList.remove('active');}else{langFR.classList.add('active');langEN.classList.remove('active');}document.documentElement.setAttribute('lang',lang)}
+langEN.onclick=()=>{lang='en';localStorage.setItem('imis_lang',lang);applyLang()};langFR.onclick=()=>{lang='fr';localStorage.setItem('imis_lang',lang);applyLang()};
+let deferredPrompt=null;window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e});
+function showIOSPopup(){const id='imis-ios-popup';if(document.getElementById(id))return;const p=document.createElement('div');Object.assign(p.style,{position:'fixed',left:'50%',bottom:'20px',transform:'translateX(-50%)',background:'rgba(0,0,0,0.9)',border:'1px solid rgba(255,176,31,0.5)',borderRadius:'16px',padding:'18px 22px',width:'90%',maxWidth:'360px',color:'#fff',fontSize:'15px',fontWeight:'500',textAlign:'center',boxShadow:'0 8px 24px rgba(0,0,0,.6)',zIndex:'99',opacity:'0',transition:'opacity .3s ease'});p.innerHTML='<div style="margin-bottom:8px;font-weight:700;color:#ffb01f;">'+t().ios_popup_title+'</div><div style="line-height:1.5;margin-bottom:10px;">'+t().ios_popup_text+'</div><button id="imis-ios-close" style="background:linear-gradient(90deg,#ffb01f,#ff8a00);border:0;border-radius:9999px;padding:9px 16px;font-weight:700;color:#000;cursor:pointer;">'+t().ios_popup_cta+'</button>';document.body.appendChild(p);requestAnimationFrame(()=>{p.style.opacity='1'});document.getElementById('imis-ios-close').onclick=()=>{p.style.opacity='0';setTimeout(()=>p.remove(),200)}}
+installBtn.onclick=async()=>{if(deferredPrompt){deferredPrompt.prompt();const c=await deferredPrompt.userChoice;if(c&&c.outcome==='accepted'){localStorage.setItem('imis_installed','1')}deferredPrompt=null}else if(isIOS()&&!isStandalone()){showIOSPopup()}else{alert('Install not available on this browser.')}}
+pushBtn.onclick=async()=>{if(isIOS()&&!isStandalone()){showIOSPopup();return}if(!('Notification'in window)||!('serviceWorker'in navigator)||!('PushManager'in window)){alert('Notifications not supported on this device/browser.');return}const perm=await Notification.requestPermission();if(perm!=='granted'){alert(lang==='fr'?'Notifications bloquées.':'Notifications were blocked.');return}const reg=await navigator.serviceWorker.ready;const k=base64UrlToUint8Array(VAPID_PUBLIC_KEY);if(k.length!==65){alert('VAPID key format issue.');return}const sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:k});await fetch('/api/saveSubscription',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(sub)});alert(lang==='fr'?'Notifications activées ✅':'Notifications enabled ✅')}
+function isInApp(){const ua=navigator.userAgent.toLowerCase();return ua.includes('fbav')||ua.includes('fban')||ua.includes('instagram')||ua.includes('line/')||ua.includes('twitter')}
+function banner(){const d=document.createElement('div');Object.assign(d.style,{position:'fixed',left:'50%',bottom:'20px',transform:'translateX(-50%)',background:'rgba(0,0,0,.85)',border:'1px solid #333',borderRadius:'14px',padding:'12px 16px',color:'#fff',fontWeight:'600',zIndex:'60',backdropFilter:'blur(6px)'});d.innerHTML=t().inapp_banner+' <button id="copylink" style="margin-left:10px;border:1px solid #444;border-radius:999px;background:#0b0b0b;color:#ffd166;font-weight:700;padding:8px 12px;cursor:pointer">'+t().inapp_copy+'</button>';document.body.appendChild(d);const b=document.getElementById('copylink');if(b){b.onclick=async()=>{await navigator.clipboard.writeText(location.href);d.innerHTML=(lang==='fr'?'Lien copié. Ouvre Safari/Chrome et colle pour continuer.':'Link copied. Open Safari/Chrome and paste to continue.')}}}
+if(isInApp())banner();if('serviceWorker'in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('/sw.js',{scope:'/'}).catch(()=>{})})}
+applyLang();
+</script>
 </body>
 </html>
