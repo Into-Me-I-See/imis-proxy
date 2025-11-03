@@ -34,40 +34,68 @@ html,body{height:100%;margin:0;background:#000}
 
 <script>
 const VAPID_PUBLIC_KEY="BG9Ke25lIFppz2UUG_OsqbM7YelVtH2DPpkWRYbkVv2rDMN-3MCVgTUSoOF3dRQ4dJobOEbt_sA36MDbmtLzs4g";
-function base64UrlToUint8Array(input){const s=input.trim().replace(/\s+/g,'').replace(/-/g,'+').replace(/_/g,'/');const padded=s+'='.repeat((4-(s.length%4))%4);const raw=atob(padded);const out=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)out[i]=raw.charCodeAt(i);return out;}
+
+function base64UrlToUint8Array(input){
+  const s=input.trim().replace(/\s+/g,'').replace(/-/g,'+').replace(/_/g,'/');
+  const padded=s+'='.repeat((4-(s.length%4))%4);
+  const raw=atob(padded);
+  const out=new Uint8Array(raw.length);
+  for(let i=0;i<raw.length;i++)out[i]=raw.charCodeAt(i);
+  return out;
+}
 function isIOS(){return /iphone|ipad|ipod/i.test(navigator.userAgent);}
 function isStandalone(){return matchMedia('(display-mode: standalone)').matches||navigator.standalone;}
+
 const frame=document.querySelector('.appframe');
 const fb=document.getElementById('fallback');
 let loaded=false;
 const t=setTimeout(()=>{if(!loaded){fb.style.display='flex';}},3000);
 frame.addEventListener('load',()=>{loaded=true;clearTimeout(t);fb.style.display='none';});
-async function hasPush(){try{if(!('serviceWorker'in navigator)||!('PushManager'in window))return false;const reg=await navigator.serviceWorker.ready;const sub=await reg.pushManager.getSubscription();return!!sub;}catch{return false;}}
-async function enablePush(){
-try{
-if(isIOS()&&!isStandalone()){alert('Add to Home Screen first, then reopen to enable notifications.');return;}
-const perm=await Notification.requestPermission();
-if(perm!=='granted'){alert('Notifications blocked. Enable in site settings.');return;}
-const reg=await navigator.serviceWorker.ready;
-const appServerKey=base64UrlToUint8Array(VAPID_PUBLIC_KEY);
-const sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:appServerKey});
-const user=await new Promise((resolve,reject)=>{
-const to=setTimeout(()=>reject(new Error('No user reply')),5000);
-function onMsg(e){if(!e.data||e.data.type!=='imis_user')return;window.removeEventListener('message',onMsg);clearTimeout(to);resolve({userId:e.data.userId,token:e.data.token});}
-window.addEventListener('message',onMsg);
-frame.contentWindow.postMessage({type:'imis_whoami'},'*');
-});
-const r=await fetch('https://app.into-me-i-see.ca/api/push/subscribe',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+user.token},body:JSON.stringify({userId:user.userId,subscription:sub})});
-if(!r.ok){alert('Saving subscription failed');return;}
-document.getElementById('notifOverlay').style.display='none';
-try{frame.contentWindow.postMessage({type:'imis_push_enabled'},'*');}catch{}
-alert('Notifications enabled ✅');
-}catch{alert('Failed to enable notifications');}
+
+async function getSubscription(){
+  try{
+    if(!('serviceWorker'in navigator)||!('PushManager'in window))return null;
+    const reg=await navigator.serviceWorker.ready;
+    return await reg.pushManager.getSubscription();
+  }catch{return null;}
 }
-async function showOverlayIfNeeded(){const already=await hasPush();if(!already)document.getElementById('notifOverlay').style.display='flex';}
+
+async function showOverlayIfNeeded(){
+  const sub=await getSubscription();
+  document.getElementById('notifOverlay').style.display=sub?'none':'flex';
+}
+
+async function enablePush(){
+  try{
+    if(isIOS()&&!isStandalone()){alert('Add to Home Screen first, then reopen to enable notifications.');return;}
+    const perm=await Notification.requestPermission();
+    if(perm!=='granted'){alert('Notifications blocked. Enable in site settings.');return;}
+    const reg=await navigator.serviceWorker.ready;
+    const appServerKey=base64UrlToUint8Array(VAPID_PUBLIC_KEY);
+    const sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:appServerKey});
+    const user=await new Promise((resolve,reject)=>{
+      const to=setTimeout(()=>reject(new Error('No user reply')),5000);
+      function onMsg(e){if(!e.data||e.data.type!=='imis_user')return;window.removeEventListener('message',onMsg);clearTimeout(to);resolve({userId:e.data.userId,token:e.data.token});}
+      window.addEventListener('message',onMsg);
+      frame.contentWindow.postMessage({type:'imis_whoami'},'*');
+    });
+    const r=await fetch('https://app.into-me-i-see.ca/api/push/subscribe',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+user.token},body:JSON.stringify({userId:user.userId,subscription:sub})});
+    if(!r.ok){alert('Saving subscription failed');return;}
+    document.getElementById('notifOverlay').style.display='none';
+    try{frame.contentWindow.postMessage({type:'imis_push_enabled'},'*');}catch{}
+    alert('Notifications enabled ✅');
+  }catch{
+    alert('Failed to enable notifications');
+  }
+}
+
 document.getElementById('enablePush').addEventListener('click',enablePush);
-if('serviceWorker'in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('/sw.js',{scope:'/'}).then(showOverlayIfNeeded);});}
+
+if('serviceWorker'in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('/sw.js',{scope:'/'}).then(showOverlayIfNeeded);
+  });
+}
 </script>
 </body>
 </html>
->
