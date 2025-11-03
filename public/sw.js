@@ -56,9 +56,10 @@ self.addEventListener("push", (e) => {
 
   e.waitUntil(
     self.registration.showNotification(title, {
-      body, icon, badge, data: { url }, requireInteraction: false
-    })
-  );
+  body: body,
+  icon: "https://abqfbjpxlxxxqjzdpmij.supabase.co/storage/v1/object/public/app-assets/20250928_181524_0000.png",
+  badge: "https://abqfbjpxlxxxqjzdpmij.supabase.co/storage/v1/object/public/app-assets/20250928_181524_0000.png",
+  data: data
 });
 
 self.addEventListener("notificationclick", (e) => {
