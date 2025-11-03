@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Into-Me-I-See</title>
+<meta name="theme-color" content="#000000">
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" type="image/png" href="https://abqfbjpxlxxxqjzdpmij.supabase.co/storage/v1/object/public/app-assets/20250928_181524_0000.png">
+<style>
+:root{--amber1:#ffb01f;--amber2:#ff8a00;--bg:#000;--card:#0b0b0b;--text:#fff}
+html,body{height:100%}
+body{margin:0;background:#000;color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;display:flex;align-items:center;justify-content:center}
+.wrap{max-width:560px;width:100%;padding:24px}
+.card{background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.08);border-radius:24px;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.logo{display:flex;align-items:center;justify-content:center;margin-bottom:12px}
+.logo img{width:72px;height:72px;border-radius:18px;object-fit:contain}
+h1{margin:16px 0 8px;font-size:28px;letter-spacing:.3px;text-align:center}
+p{margin:0 0 18px;opacity:.85;line-height:1.5;text-align:center}
+.actions{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.btn{appearance:none;border:0;border-radius:9999px;padding:14px 22px;font-weight:700;cursor:pointer}
+.btn-amber{background:linear-gradient(90deg,var(--amber1),var(--amber2));color:#000;box-shadow:0 8px 24px rgba(255,138,0,.35)}
+.btn-ghost{background:#0b0b0b;border:1px solid #333;color:#ffd166}
+.modal{position:fixed;inset:0;display:none;background:rgba(0,0,0,.6);z-index:50}
+.modal-card{max-width:520px;margin:8vh auto;background:var(--card);border-radius:20px;padding:24px;border:1px solid rgba(255,255,255,.06)}
+.modal h3{margin:0 0 8px;font-size:20px}
+ol{margin:0 0 12px 20px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="card">
+<div class="logo">
+<img src="https://abqfbjpxlxxxqjzdpmij.supabase.co/storage/v1/object/public/app-assets/20250928_181524_0000.png" alt="Into-Me-I-See Logo">
+</div>
+<h1>Into-Me-I-See</h1>
+<p>Install the app for a full-screen experience and enable notifications to receive gentle practice reminders.</p>
+<div class="actions">
+<button id="open-app" class="btn btn-amber" style="display:none">Open the App</button>
+<button id="install-app" class="btn btn-amber" style="display:none">Install the App</button>
+</div>
+</div>
+</div>
+
+<div id="ios-a2hs" class="modal">
+<div class="modal-card">
+<h3>Add to Home Screen</h3>
+<p>Open this page in Safari and follow the steps:</p>
+<ol>
+<li>Tap <b>Share</b> (square with arrow).</li>
+<li>Choose <b>Add to Home Screen</b>.</li>
+<li>Tap <b>Add</b>, then open the app from your Home Screen.</li>
+</ol>
+<button id="ios-a2hs-close" class="btn btn-ghost">Got it</button>
+</div>
+</div>
+
+<script>
+let deferredPrompt=null;
+const openBtn=document.getElementById('open-app');
+const installBtn=document.getElementById('install-app');
+const iosModal=document.getElementById('ios-a2hs');
+const iosClose=document.getElementById('ios-a2hs-close');
+function isIOS(){return /iphone|ipad|ipod/i.test(navigator.userAgent);}
+function isStandalone(){return matchMedia('(display-mode: standalone)').matches||navigator.standalone;}
+window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();deferredPrompt=e;maybeShow();});
+function maybeShow(){
+if(isStandalone()){openBtn.style.display='inline-flex';installBtn.style.display='none';}
+else{openBtn.style.display='none';if(isIOS()){installBtn.style.display='inline-flex';}else{installBtn.style.display=deferredPrompt?'inline-flex':'none';}}
+}
+installBtn.addEventListener('click',async()=>{
+if(isIOS()){iosModal.style.display='block';return;}
+if(!deferredPrompt)return;
+deferredPrompt.prompt();
+await deferredPrompt.userChoice;
+deferredPrompt=null;
+setTimeout(maybeShow,500);
+});
+iosClose.addEventListener('click',()=>iosModal.style.display='none');
+openBtn.addEventListener('click',()=>{window.location.href='/app';});
+maybeShow();
+</script>
+</body>
+</html>
