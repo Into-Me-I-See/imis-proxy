@@ -19,11 +19,13 @@ html,body{height:100%;margin:0;background:#000}
 <body>
 <div class="wrap">
   <iframe
+  id="appframe"
   class="appframe"
   src="https://app.into-me-i-see.ca"
   allow="fullscreen; clipboard-read; clipboard-write; autoplay"
   referrerpolicy="no-referrer"
 ></iframe>
+
   <div id="fallback" class="fallback">
     <div>
       <div style="text-align:center;margin-bottom:12px">Opening the app…</div>
@@ -51,7 +53,7 @@ function isStandalone(){return matchMedia('(display-mode: standalone)').matches|
 
 const overlay=document.getElementById('notifOverlay');
 const enableBtn=document.getElementById('enablePush');
-const frame=document.querySelector('.appframe');
+const frame=document.getElementById('appframe');
 const fb=document.getElementById('fallback');
 
 let loaded=false;
@@ -111,7 +113,38 @@ if('serviceWorker'in navigator){
     navigator.serviceWorker.register('/sw.js',{scope:'/'}).then(showOverlayIfNeeded);
   });
 }
+
+const APP_ORIGIN = "https://app.into-me-i-see.ca";
+const PWA_ORIGIN = "https://pwa.into-me-i-see.ca";
+
+function sendToApp(type,payload){
+  if(frame && frame.contentWindow){
+    frame.contentWindow.postMessage({source:"imis_pwa",type,payload},APP_ORIGIN);
+  }
+}
+
+window.addEventListener("message",(e)=>{
+  if(e.origin!==APP_ORIGIN)return;
+  const msg=e.data||{};
+  if(msg.source!=="imis_app")return;
+
+  if(msg.type==="imis_ready"){
+    sendToApp("imis_whoami",null);
+  }
+
+  if(msg.type==="imis_session"){
+    try{localStorage.setItem("imis_session",JSON.stringify(msg.payload||{}));}catch{}
+    console.log("Session from app:",msg.payload);
+  }
+
+  if(msg.type==="imis_pong"){
+    console.log("PONG",Date.now()-(msg.payload||0),"ms");
+  }
+});
+
+frame.addEventListener("load",()=>{
+  sendToApp("imis_ping",Date.now());
+});
 </script>
 </body>
 </html>
-
