@@ -42,8 +42,9 @@ self.addEventListener("fetch", (event) => {
   event.respondWith(fetch(req));
 });
 
-
-const BADGE_URL = "https://abqfbjpxlxxxqjzdpmij.supabase.co/storage/v1/object/public/app-assets/72x72%20white%20logo%20_transparent.png";
+// ---- Push Notifications ----
+const ICON_URL = "https://abqfbjpxlxxxqjzdpmij.supabase.co/storage/v1/object/public/app-assets/72x72%20white%20logo%20_transparent.png";
+const BADGE_URL = ICON_URL;
 
 self.addEventListener("push", (e) => {
   let data = {};
@@ -56,7 +57,8 @@ self.addEventListener("push", (e) => {
   e.waitUntil(
     self.registration.showNotification(title, {
       body,
-      badge: BADGE_URL,
+      icon: ICON_URL,   // ✅ defines the small top-left icon (replaces gray “P”)
+      badge: BADGE_URL, // ✅ monochrome white icon for status bar
       data: { url: targetUrl, ...data }
     })
   );
