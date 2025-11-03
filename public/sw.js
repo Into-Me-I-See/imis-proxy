@@ -42,6 +42,9 @@ self.addEventListener("fetch", (event) => {
   event.respondWith(fetch(req));
 });
 
+
+const BADGE_URL = "https://abqfbjpxlxxxqjzdpmij.supabase.co/storage/v1/object/public/app-assets/72x72%20white%20logo%20_transparent.png";
+
 self.addEventListener("push", (e) => {
   let data = {};
   try { data = e.data ? e.data.json() : {}; } catch (_) {}
@@ -49,14 +52,11 @@ self.addEventListener("push", (e) => {
   const title = data.title || "Into-Me-I-See";
   const body  = data.body  || "You have a new notification.";
   const targetUrl = data.url || "/app";
-  const icon  = data.icon  || "https://abqfbjpxlxxxqjzdpmij.supabase.co/storage/v1/object/public/app-assets/20250928_181524_0000.png";
-  const badge = data.badge || icon;
 
   e.waitUntil(
     self.registration.showNotification(title, {
       body,
-      icon,
-      badge,
+      badge: BADGE_URL,
       data: { url: targetUrl, ...data }
     })
   );
@@ -68,7 +68,6 @@ self.addEventListener("notificationclick", (e) => {
 
   e.waitUntil((async () => {
     const list = await clients.matchAll({ type: "window", includeUncontrolled: true });
-
     for (const c of list) {
       if (new URL(c.url).origin === self.location.origin) {
         try { c.postMessage({ type: "navigate", url: targetUrl }); } catch {}
