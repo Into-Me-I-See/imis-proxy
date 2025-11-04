@@ -19,12 +19,12 @@ html,body{height:100%;margin:0;background:#000}
 <body>
 <div class="wrap">
   <iframe
-  id="appframe"
-  class="appframe"
-  src="https://app.into-me-i-see.ca"
-  allow="fullscreen; clipboard-read; clipboard-write; autoplay"
-  referrerpolicy="no-referrer"
-></iframe>
+    id="appframe"
+    class="appframe"
+    src="https://app.into-me-i-see.ca"
+    allow="fullscreen; clipboard-read; clipboard-write; autoplay"
+    referrerpolicy="no-referrer"
+  ></iframe>
 
   <div id="fallback" class="fallback">
     <div>
@@ -74,7 +74,12 @@ async function showOverlayIfNeeded(){
 async function handshake(){
   return await new Promise((resolve,reject)=>{
     const to=setTimeout(()=>reject(new Error('no_user')),6000);
-    function onMsg(e){if(!e.data||e.data.type!=='imis_user')return;window.removeEventListener('message',onMsg);clearTimeout(to);resolve({userId:e.data.userId,token:e.data.token})}
+    function onMsg(e){
+      if(!e.data||e.data.type!=='imis_user')return;
+      window.removeEventListener('message',onMsg);
+      clearTimeout(to);
+      resolve({userId:e.data.userId,token:e.data.token});
+    }
     window.addEventListener('message',onMsg);
     frame.contentWindow.postMessage({type:'imis_whoami'},'*');
   });
@@ -82,7 +87,11 @@ async function handshake(){
 
 async function saveSubscription(sub,user){
   try{
-    const res=await fetch('https://app.into-me-i-see.ca/api/push/subscribe',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+user.token},body:JSON.stringify({userId:user.userId,subscription:sub})});
+    const res=await fetch('https://app.into-me-i-see.ca/api/push/subscribe',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+user.token},
+      body:JSON.stringify({userId:user.userId,subscription:sub})
+    });
     return res.ok;
   }catch{return false}
 }
@@ -115,7 +124,6 @@ if('serviceWorker'in navigator){
 }
 
 const APP_ORIGIN = "https://app.into-me-i-see.ca";
-const PWA_ORIGIN = "https://pwa.into-me-i-see.ca";
 
 function sendToApp(type,payload){
   if(frame && frame.contentWindow){
@@ -140,11 +148,29 @@ window.addEventListener("message",(e)=>{
   if(msg.type==="imis_pong"){
     console.log("PONG",Date.now()-(msg.payload||0),"ms");
   }
+
+  if(msg.type==="imis_enable_push"){
+    (async()=>{
+      try{await enablePush(); frame.contentWindow.postMessage({type:"imis_push_result",ok:true},"*");}
+      catch{frame.contentWindow.postMessage({type:"imis_push_result",ok:false},"*");}
+      reportPushStatus();
+    })();
+  }
+
+  if(msg.type==="imis_push_status_request"){
+    reportPushStatus();
+  }
 });
 
 frame.addEventListener("load",()=>{
   sendToApp("imis_ping",Date.now());
+  reportPushStatus();
 });
+
+async function reportPushStatus(){
+  const sub=await getSub();
+  try{frame.contentWindow.postMessage({type:"imis_push_status",enabled:!!sub},"*");}catch{}
+}
 </script>
 </body>
 </html>
