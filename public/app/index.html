@@ -7,13 +7,13 @@
 <meta name="theme-color" content="#000000">
 <link rel="icon" type="image/png" href="https://abqfbjpxlxxxqjzdpmij.supabase.co/storage/v1/object/public/app-assets/20250928_181524_0000.png">
 <style>
-html,body{height:100%;margin:0;background:#000}
-.wrap{height:100dvh;height:100vh;background:#000}
-.appframe{border:0;width:100%;height:100%;display:block;background:#000}
-.fallback{position:fixed;inset:0;display:none;align-items:center;justify-content:center;color:#fff;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
-.overlay{position:fixed;right:14px;bottom:calc(16px + env(safe-area-inset-bottom));display:none;z-index:10}
-.btn{appearance:none;border:0;border-radius:9999px;padding:12px 18px;font-weight:700;cursor:pointer}
-.btn-amber{background:linear-gradient(90deg,#ffb01f,#ff8a00);color:#000;box-shadow:0 8px 24px rgba(255,138,0,.35)}
+  html,body{height:100%;margin:0;background:#000}
+  .wrap{height:100dvh;height:100vh;background:#000}
+  .appframe{border:0;width:100%;height:100%;display:block;background:#000}
+  .fallback{position:fixed;inset:0;display:none;align-items:center;justify-content:center;color:#fff;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+  .overlay{position:fixed;right:14px;bottom:calc(16px + env(safe-area-inset-bottom));display:none;z-index:10}
+  .btn{appearance:none;border:0;border-radius:9999px;padding:12px 18px;font-weight:700;cursor:pointer}
+  .btn-amber{background:linear-gradient(90deg,#ffb01f,#ff8a00);color:#000;box-shadow:0 8px 24px rgba(255,138,0,.35)}
 </style>
 </head>
 <body>
@@ -40,6 +40,7 @@ html,body{height:100%;margin:0;background:#000}
 
 <script>
 const VAPID_PUBLIC_KEY="BG9Ke25lIFppz2UUG_OsqbM7YelVtH2DPpkWRYbkVv2rDMN-3MCVgTUSoOF3dRQ4dJobOEbt_sA36MDbmtLzs4g";
+const APP_ORIGIN = "https://app.into-me-i-see.ca";
 
 function base64UrlToUint8Array(s){
   s=s.trim().replace(/\s+/g,'').replace(/-/g,'+').replace(/_/g,'/');
@@ -60,10 +61,10 @@ let loaded=false;
 const t=setTimeout(()=>{if(!loaded){fb.style.display='flex';}},3000);
 frame.addEventListener('load',()=>{loaded=true;clearTimeout(t);fb.style.display='none';});
 
-async function getSW(){if(!('serviceWorker'in navigator))return null;const r=await navigator.serviceWorker.ready;return r}
+async function getSW(){if(!('serviceWorker'in navigator))return null;return await navigator.serviceWorker.ready}
 async function getSub(){try{const r=await getSW();if(!r||!('PushManager'in window))return null;return await r.pushManager.getSubscription()}catch{return null}}
 
-async function showOverlayIfNeeded(){
+async function refreshOverlay(){
   if(isIOS()&&!isStandalone()){overlay.style.display='none';return}
   if(!('Notification'in window)||!('serviceWorker'in navigator)||!('PushManager'in window)){overlay.style.display='none';return}
   if(Notification.permission==='denied'){overlay.style.display='none';return}
@@ -71,17 +72,25 @@ async function showOverlayIfNeeded(){
   overlay.style.display=sub?'none':'block';
 }
 
+function sendToApp(type,payload){
+  if(frame && frame.contentWindow){
+    frame.contentWindow.postMessage({source:"imis_pwa",type,payload},APP_ORIGIN);
+  }
+}
+
 async function handshake(){
   return await new Promise((resolve,reject)=>{
     const to=setTimeout(()=>reject(new Error('no_user')),6000);
     function onMsg(e){
-      if(!e.data||e.data.type!=='imis_user')return;
+      if(e.origin!==APP_ORIGIN) return;
+      const d=e.data||{};
+      if(d.type!=='imis_user')return;
       window.removeEventListener('message',onMsg);
       clearTimeout(to);
-      resolve({userId:e.data.userId,token:e.data.token});
+      resolve({userId:d.userId,token:d.token});
     }
     window.addEventListener('message',onMsg);
-    frame.contentWindow.postMessage({type:'imis_whoami'},'*');
+    sendToApp('imis_whoami',null);
   });
 }
 
@@ -96,6 +105,12 @@ async function saveSubscription(sub,user){
   }catch{return false}
 }
 
+async function reportPushStatus(){
+  const sub=await getSub();
+  try{frame.contentWindow.postMessage({source:'imis_pwa',type:'imis_push_status',enabled:!!sub},APP_ORIGIN);}catch{}
+  refreshOverlay();
+}
+
 async function enablePush(){
   try{
     if(isIOS()&&!isStandalone()){alert('Add to Home Screen first, then reopen to enable notifications.');return}
@@ -107,70 +122,44 @@ async function enablePush(){
     const sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:key});
     let user=null; try{user=await handshake()}catch{user=null}
     if(user){const ok=await saveSubscription(sub,user); if(!ok){alert('Saved locally but backend save failed.');}}
-    overlay.style.display='none';
-    try{frame.contentWindow.postMessage({type:'imis_push_enabled'},'*')}catch{}
+    try{frame.contentWindow.postMessage({source:'imis_pwa',type:'imis_push_enabled'},APP_ORIGIN);}catch{}
+    await reportPushStatus();
     alert('Notifications enabled ✅');
-  }catch(e){
-    alert('Failed to enable notifications');
-  }
+  }catch{alert('Failed to enable notifications')}
 }
 
 enableBtn.addEventListener('click',enablePush);
 
 if('serviceWorker'in navigator){
   window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('/sw.js',{scope:'/'}).then(showOverlayIfNeeded);
+    navigator.serviceWorker.register('/sw.js',{scope:'/'}).then(()=>{reportPushStatus()});
   });
+  navigator.serviceWorker.addEventListener('controllerchange',reportPushStatus);
 }
 
-const APP_ORIGIN = "https://app.into-me-i-see.ca";
-
-function sendToApp(type,payload){
-  if(frame && frame.contentWindow){
-    frame.contentWindow.postMessage({source:"imis_pwa",type,payload},APP_ORIGIN);
-  }
-}
+window.addEventListener("visibilitychange",()=>{ if(!document.hidden) reportPushStatus() });
 
 window.addEventListener("message",(e)=>{
-  if(e.origin!==APP_ORIGIN)return;
+  if(e.origin!==APP_ORIGIN) return;
   const msg=e.data||{};
-  if(msg.source!=="imis_app")return;
+  if(msg.source!=="imis_app") return;
 
-  if(msg.type==="imis_ready"){
-    sendToApp("imis_whoami",null);
-  }
-
-  if(msg.type==="imis_session"){
-    try{localStorage.setItem("imis_session",JSON.stringify(msg.payload||{}));}catch{}
-    console.log("Session from app:",msg.payload);
-  }
-
-  if(msg.type==="imis_pong"){
-    console.log("PONG",Date.now()-(msg.payload||0),"ms");
-  }
-
+  if(msg.type==="imis_ready"){ sendToApp("imis_whoami",null) }
+  if(msg.type==="imis_session"){ try{localStorage.setItem("imis_session",JSON.stringify(msg.payload||{}));}catch{} }
+  if(msg.type==="imis_pong"){ /* debug only */ }
   if(msg.type==="imis_enable_push"){
     (async()=>{
-      try{await enablePush(); frame.contentWindow.postMessage({type:"imis_push_result",ok:true},"*");}
-      catch{frame.contentWindow.postMessage({type:"imis_push_result",ok:false},"*");}
-      reportPushStatus();
+      try{await enablePush(); frame.contentWindow.postMessage({source:'imis_pwa',type:"imis_push_result",ok:true},APP_ORIGIN);}
+      catch{frame.contentWindow.postMessage({source:'imis_pwa',type:"imis_push_result",ok:false},APP_ORIGIN);}
     })();
   }
-
-  if(msg.type==="imis_push_status_request"){
-    reportPushStatus();
-  }
+  if(msg.type==="imis_push_status_request"){ reportPushStatus() }
 });
 
 frame.addEventListener("load",()=>{
   sendToApp("imis_ping",Date.now());
   reportPushStatus();
 });
-
-async function reportPushStatus(){
-  const sub=await getSub();
-  try{frame.contentWindow.postMessage({type:"imis_push_status",enabled:!!sub},"*");}catch{}
-}
 </script>
 </body>
 </html>
