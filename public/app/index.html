@@ -57,7 +57,7 @@ async function getSub(){
 function postToApp(message){
   const appFrame = document.getElementById("appframe");
   if(appFrame && appFrame.contentWindow){
-    appFrame.contentWindow.postMessage(message, APP_ORIGIN);
+    appFrame.contentWindow.postMessage(message, "*");
   }
 }
 
