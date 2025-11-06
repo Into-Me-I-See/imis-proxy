@@ -11,9 +11,6 @@ html,body{height:100%;margin:0;background:#000}
 .wrap{height:100dvh;height:100vh;background:#000}
 .appframe{border:0;width:100%;height:100%;display:block;background:#000}
 .fallback{position:fixed;inset:0;display:none;align-items:center;justify-content:center;color:#fff;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
-.overlay{position:fixed;right:14px;bottom:calc(16px + env(safe-area-inset-bottom));display:none;z-index:10}
-.btn{appearance:none;border:0;border-radius:9999px;padding:12px 18px;font-weight:700;cursor:pointer}
-.btn-amber{background:linear-gradient(90deg,#ffb01f,#ff8a00);color:#000;box-shadow:0 8px 24px rgba(255,138,0,.35)}
 </style>
 </head>
 <body>
@@ -57,6 +54,13 @@ async function getSub(){
   }
 }
 
+function postToApp(message){
+  const appFrame = document.getElementById("appframe");
+  if(appFrame && appFrame.contentWindow){
+    appFrame.contentWindow.postMessage(message, APP_ORIGIN);
+  }
+}
+
 async function saveSub(userId, sub){
   await fetch("https://app.into-me-i-see.ca/api/functions/registerDeviceToken",{
     method:"POST",
@@ -67,12 +71,12 @@ async function saveSub(userId, sub){
 
 async function enablePush(userId){
   if(!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)){
-    parent.postMessage({ source:"imis_pwa", type:"imis_push_status", enabled:false, reason:"unsupported" }, APP_ORIGIN);
+    postToApp({ source:"imis_pwa", type:"imis_push_status", enabled:false, reason:"unsupported" });
     return;
   }
   const perm = (Notification.permission==='default')? await Notification.requestPermission(): Notification.permission;
   if(perm!=="granted"){
-    parent.postMessage({ source:"imis_pwa", type:"imis_push_status", enabled:false, reason:"denied" }, APP_ORIGIN);
+    postToApp({ source:"imis_pwa", type:"imis_push_status", enabled:false, reason:"denied" });
     return;
   }
   await navigator.serviceWorker.register("/sw.js",{scope:"/"});
@@ -80,7 +84,7 @@ async function enablePush(userId){
   const key = b64ToU8(VAPID_PUBLIC_KEY);
   const sub = await reg.pushManager.subscribe({ userVisibleOnly:true, applicationServerKey:key });
   await saveSub(userId, sub);
-  parent.postMessage({ source:"imis_pwa", type:"imis_push_status", enabled:true }, APP_ORIGIN);
+  postToApp({ source:"imis_pwa", type:"imis_push_status", enabled:true });
 }
 
 window.addEventListener("message", async (e)=>{
@@ -92,13 +96,13 @@ window.addEventListener("message", async (e)=>{
   }
   if(msg.type==="imis_push_status_request"){
     const sub = await getSub();
-    parent.postMessage({ source:"imis_pwa", type:"imis_push_status", enabled:!!sub }, APP_ORIGIN);
+    postToApp({ source:"imis_pwa", type:"imis_push_status", enabled:!!sub });
   }
 });
 
 (async () => {
   const sub = await getSub();
-  parent.postMessage({ source:"imis_pwa", type:"imis_push_status", enabled:!!sub }, APP_ORIGIN);
+  postToApp({ source:"imis_pwa", type:"imis_push_status", enabled:!!sub });
 })();
 </script>
 </body>
