@@ -58,50 +58,47 @@ async function getSub(){
 }
 
 async function saveSub(userId, sub){
-  await fetch("https://app.into-me-i-see.ca/api/functions/registerDeviceToken", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
+  await fetch("https://app.into-me-i-see.ca/api/functions/registerDeviceToken",{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
     body: JSON.stringify({ userId, subscription: sub })
   });
 }
 
 async function enablePush(userId){
   if(!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)){
-    parent.postMessage({ source: "imis_pwa", type: "imis_push_status", enabled: false, reason: "unsupported" }, APP_ORIGIN);
+    parent.postMessage({ source:"imis_pwa", type:"imis_push_status", enabled:false, reason:"unsupported" }, APP_ORIGIN);
     return;
   }
-
-  const perm = (Notification.permission === 'default') ? await Notification.requestPermission() : Notification.permission;
-  if(perm !== "granted"){
-    parent.postMessage({ source: "imis_pwa", type: "imis_push_status", enabled: false, reason: "denied" }, APP_ORIGIN);
+  const perm = (Notification.permission==='default')? await Notification.requestPermission(): Notification.permission;
+  if(perm!=="granted"){
+    parent.postMessage({ source:"imis_pwa", type:"imis_push_status", enabled:false, reason:"denied" }, APP_ORIGIN);
     return;
   }
-
-  await navigator.serviceWorker.register("/sw.js", { scope: "/" });
+  await navigator.serviceWorker.register("/sw.js",{scope:"/"});
   const reg = await swReady();
   const key = b64ToU8(VAPID_PUBLIC_KEY);
-  const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key });
-
+  const sub = await reg.pushManager.subscribe({ userVisibleOnly:true, applicationServerKey:key });
   await saveSub(userId, sub);
-  parent.postMessage({ source: "imis_pwa", type: "imis_push_status", enabled: true }, APP_ORIGIN);
+  parent.postMessage({ source:"imis_pwa", type:"imis_push_status", enabled:true }, APP_ORIGIN);
 }
 
-window.addEventListener("message", async (e) => {
-  if(e.origin !== APP_ORIGIN) return;
+window.addEventListener("message", async (e)=>{
+  if(e.origin!==APP_ORIGIN) return;
   const msg = e.data || {};
-  if(msg.type === "imis_enable_push"){
-    const userId = msg.userId || msg.payload?.userId;
-    if(userId) enablePush(userId);
+  if(msg.source!=="imis_app") return;
+  if(msg.type==="imis_enable_push" && msg.payload?.userId){
+    enablePush(msg.payload.userId);
   }
-  if(msg.type === "imis_push_status_request"){
+  if(msg.type==="imis_push_status_request"){
     const sub = await getSub();
-    parent.postMessage({ source: "imis_pwa", type: "imis_push_status", enabled: !!sub }, APP_ORIGIN);
+    parent.postMessage({ source:"imis_pwa", type:"imis_push_status", enabled:!!sub }, APP_ORIGIN);
   }
 });
 
 (async () => {
   const sub = await getSub();
-  parent.postMessage({ source: "imis_pwa", type: "imis_push_status", enabled: !!sub }, APP_ORIGIN);
+  parent.postMessage({ source:"imis_pwa", type:"imis_push_status", enabled:!!sub }, APP_ORIGIN);
 })();
 </script>
 </body>
