@@ -68,7 +68,7 @@
       postToApp({source:"imis_pwa",type:"imis_push_status",enabled:false,reason:"denied"});
       return;
     }
-    await navigator.serviceWorker.register("/sw.js",{scope:"/"});
+    await navigator.serviceWorker.register("/app/sw.js",{scope:"/app/"});
     const reg=await swReady();
     const key=b64ToU8(VAPID_PUBLIC_KEY);
     const sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:key});
