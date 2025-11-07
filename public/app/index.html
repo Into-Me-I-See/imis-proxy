@@ -25,7 +25,7 @@
 
   <script>
   const APP_ORIGIN = "https://app.into-me-i-see.ca";
-  const VAPID_PUBLIC_KEY = "BG9Ke25lIFppz2UUG_OsqbM7YelVtH2DPpkWRYbkVv2rDMN-3MCVgTUSoOF3dRQ4dJobOEbt_sA36MDbmtLzs4g";
+  const VAPID_PUBLIC_KEY = "BG9Ke25lIFppz2UUG_OsqbM7YeIvH2DPpkpWRybKv2rDWN-3MCYUSOf03R40qdOBoEb_tSA36MDbl2Sz4g";
 
   function b64ToU8(s){
     s=s.replace(/-/g,'+').replace(/_/g,'/');
@@ -36,7 +36,6 @@
     if(!f||!f.contentWindow) return;
     f.contentWindow.postMessage(message, APP_ORIGIN);
   }
-
   async function swReady(){
     if(!('serviceWorker' in navigator)) return null;
     return await navigator.serviceWorker.ready;
@@ -45,11 +44,8 @@
     try{
       const r=await swReady();
       return r? await r.pushManager.getSubscription():null;
-    }catch{
-      return null;
-    }
+    }catch{ return null; }
   }
-
   async function saveSub(userId, sub){
     await fetch("https://app.into-me-i-see.ca/api/functions/registerDeviceToken",{
       method:"POST",
@@ -57,7 +53,6 @@
       body: JSON.stringify({ userId, subscription: sub })
     });
   }
-
   async function enablePush(userId){
     if(!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)){
       postToApp({source:"imis_pwa",type:"imis_push_status",enabled:false,reason:"unsupported"});
@@ -75,20 +70,16 @@
     await saveSub(userId, sub);
     postToApp({source:"imis_pwa",type:"imis_push_status",enabled:true});
   }
-
   window.addEventListener("message", async (e)=>{
     if(e.origin!==APP_ORIGIN) return;
     const msg=e.data||{};
     if(msg.source!=="imis_app") return;
-    if(msg.type==="imis_enable_push" && msg.payload?.userId){
-      enablePush(msg.payload.userId);
-    }
+    if(msg.type==="imis_enable_push" && msg.payload?.userId){ enablePush(msg.payload.userId); }
     if(msg.type==="imis_push_status_request"){
       const sub=await getSub();
       postToApp({source:"imis_pwa",type:"imis_push_status",enabled:!!sub});
     }
   });
-
   document.addEventListener("DOMContentLoaded", async ()=>{
     const sub=await getSub();
     postToApp({source:"imis_pwa",type:"imis_push_status",enabled:!!sub});
