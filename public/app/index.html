@@ -31,7 +31,6 @@
     s=s.replace(/-/g,'+').replace(/_/g,'/');
     return Uint8Array.from(atob(s.padEnd(s.length+(4-(s.length%4))%4,'=')),c=>c.charCodeAt(0));
   }
-
   function postToApp(message){
     const f=document.getElementById("appframe");
     if(!f||!f.contentWindow) return;
@@ -42,7 +41,6 @@
     if(!('serviceWorker' in navigator)) return null;
     return await navigator.serviceWorker.ready;
   }
-
   async function getSub(){
     try{
       const r=await swReady();
@@ -65,18 +63,15 @@
       postToApp({source:"imis_pwa",type:"imis_push_status",enabled:false,reason:"unsupported"});
       return;
     }
-
     const perm=(Notification.permission==='default')? await Notification.requestPermission(): Notification.permission;
     if(perm!=="granted"){
       postToApp({source:"imis_pwa",type:"imis_push_status",enabled:false,reason:"denied"});
       return;
     }
-
     await navigator.serviceWorker.register("/sw.js",{scope:"/"});
     const reg=await swReady();
     const key=b64ToU8(VAPID_PUBLIC_KEY);
     const sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:key});
-
     await saveSub(userId, sub);
     postToApp({source:"imis_pwa",type:"imis_push_status",enabled:true});
   }
@@ -85,7 +80,6 @@
     if(e.origin!==APP_ORIGIN) return;
     const msg=e.data||{};
     if(msg.source!=="imis_app") return;
-
     if(msg.type==="imis_enable_push" && msg.payload?.userId){
       enablePush(msg.payload.userId);
     }
