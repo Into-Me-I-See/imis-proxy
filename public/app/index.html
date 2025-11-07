@@ -24,76 +24,48 @@
   </div>
 
   <script>
-  const APP_ORIGIN = "https://app.into-me-i-see.ca";
-  const VAPID_PUBLIC_KEY = "BG9Ke25lIFppz2UUG_OsqbM7YelVtH2DPpkWRYbkVv2rDMN-3MCVgTUSoOF3dRQ4dJobOEbt_sA36MDbmtLzs4g";
+    const APP_ORIGIN="https://app.into-me-i-see.ca";
+    const VAPID_PUBLIC_KEY="BG9Ke25lIFppz2UUG_OsqbM7YelVtH2DPpkWRYbkVv2rDMN-3MCVgTUSoOF3dRQ4dJobOEbt_sA36MDbmtLzs4g";
 
-  function b64ToU8(s){
-    s=s.replace(/-/g,'+').replace(/_/g,'/');
-    return Uint8Array.from(atob(s.padEnd(s.length+(4-(s.length%4))%4,'=')),c=>c.charCodeAt(0));
-  }
+    function b64ToU8(s){s=s.replace(/-/g,'+').replace(/_/g,'/');return Uint8Array.from(atob(s.padEnd(s.length+(4-(s.length%4))%4,'=')),c=>c.charCodeAt(0));}
+    function postToApp(message){const f=document.getElementById("appframe");if(!f||!f.contentWindow)return;f.contentWindow.postMessage(message,APP_ORIGIN);}
 
-  function postToApp(message){
-    const f=document.getElementById("appframe");
-    if(!f||!f.contentWindow) return;
-    f.contentWindow.postMessage(message, APP_ORIGIN);
-  }
+    async function swReady(){if(!('serviceWorker'in navigator))return null;return await navigator.serviceWorker.ready;}
+    async function getSub(){try{const r=await swReady();return r?await r.pushManager.getSubscription():null;}catch{return null}}
 
-  async function swReady(){
-    if(!('serviceWorker' in navigator)) return null;
-    return await navigator.serviceWorker.ready;
-  }
+    async function saveSub(userId,sub){
+      await fetch("https://app.into-me-i-see.ca/api/functions/registerDeviceToken",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({userId,subscription:sub})
+      });
+    }
 
-  async function getSub(){
-    try{
-      const r=await swReady();
-      return r? await r.pushManager.getSubscription():null;
-    }catch{ return null; }
-  }
+    async function enablePush(userId){
+      if(!('Notification'in window)||!('serviceWorker'in navigator)||!('PushManager'in window)){postToApp({source:"imis_pwa",type:"imis_push_status",enabled:false,reason:"unsupported"});return;}
+      const perm=(Notification.permission==='default')?await Notification.requestPermission():Notification.permission;
+      if(perm!=="granted"){postToApp({source:"imis_pwa",type:"imis_push_status",enabled:false,reason:"denied"});return;}
+      await navigator.serviceWorker.register("/sw.js",{scope:"/"});
+      const reg=await swReady();
+      const key=b64ToU8(VAPID_PUBLIC_KEY);
+      const sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:key});
+      await saveSub(userId,sub);
+      postToApp({source:"imis_pwa",type:"imis_push_status",enabled:true});
+    }
 
-  async function saveSub(userId, sub){
-    await fetch("https://app.into-me-i-see.ca/api/functions/registerDeviceToken",{
-      method:"POST",
-      headers:{ "Content-Type":"application/json" },
-      body: JSON.stringify({ userId, subscription: sub })
+    window.addEventListener("message",async(e)=>{
+      if(e.origin!==APP_ORIGIN)return;
+      const msg=e.data||{};
+      if(msg.source!=="imis_app")return;
+      if(msg.type==="imis_enable_push"&&msg.payload?.userId){enablePush(msg.payload.userId);}
+      if(msg.type==="imis_push_status_request"){const sub=await getSub();postToApp({source:"imis_pwa",type:"imis_push_status",enabled:!!sub});}
     });
-  }
 
-  async function enablePush(userId){
-    if(!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)){
-      postToApp({source:"imis_pwa",type:"imis_push_status",enabled:false,reason:"unsupported"});
-      return;
-    }
-    const perm=(Notification.permission==='default')? await Notification.requestPermission(): Notification.permission;
-    if(perm!=="granted"){
-      postToApp({source:"imis_pwa",type:"imis_push_status",enabled:false,reason:"denied"});
-      return;
-    }
-    await navigator.serviceWorker.register("/app/sw.js",{scope:"/app/"});
-    const reg=await swReady();
-    const key=b64ToU8(VAPID_PUBLIC_KEY);
-    const sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:key});
-    await saveSub(userId, sub);
-    postToApp({source:"imis_pwa",type:"imis_push_status",enabled:true});
-  }
-
-  window.addEventListener("message", async (e)=>{
-    if(e.origin!==APP_ORIGIN) return;
-    const msg=e.data||{};
-    if(msg.source!=="imis_app") return;
-
-    if(msg.type==="imis_enable_push" && msg.payload?.userId){
-      enablePush(msg.payload.userId);
-    }
-    if(msg.type==="imis_push_status_request"){
+    document.addEventListener("DOMContentLoaded",async()=>{
       const sub=await getSub();
       postToApp({source:"imis_pwa",type:"imis_push_status",enabled:!!sub});
-    }
-  });
-
-  document.addEventListener("DOMContentLoaded", async ()=>{
-    const sub=await getSub();
-    postToApp({source:"imis_pwa",type:"imis_push_status",enabled:!!sub});
-  });
+    });
   </script>
 </body>
 </html>
+
